@@ -1,0 +1,2808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* ── Design tokens from Figma ── */
+      --bg:              #ffffff;
+      --bg-surface:      #f5f6f8;
+      --border:          #e5e7ec;
+      --border-light:    #eff0f3;
+      --border-card:     #e5e5e5;
+      --foreground:      #0a0a0a;
+      --accent-fg:       #0f172a;
+      --heading:         #1e2d4d;
+      --muted-fg:        #64748b;
+      --subtle:          #767676;
+      --ink-tertiary:    #94a3b8;
+      --neutral-300:     #b0b4bb;
+      /* Primary brand — slate-blue from Figma */
+      --primary:         #4a60a8;
+      --primary-dark:    #4c62a8;
+      --primary-200:     #b6c3e8;
+      --primary-100:     #e4e9f5;
+      --primary-50:      #eef1f9;
+      /* Action / status — orange */
+      --action-bg:       #fbe6d6;
+      --action-fg:       #e07a3e;
+      /* Toggle + badge accent */
+      --toggle-active:   #4a60a8;
+      --badge-blue:      #4a60a8;
+      /* Sidebar */
+      --sidebar-bg:      #0f172a;
+      --sidebar-border:  rgba(255,255,255,0.06);
+      --sidebar-divider: rgba(255,255,255,0.07);
+      --sidebar-active:  rgba(123,143,201,0.2);
+      --sidebar-active-fg: #9ca8cd;
+      --sidebar-fg:      #f3f3f6;
+      /* Display + body fonts */
+      --font-serif:      'Libre Baskerville', Georgia, serif;
+      --font-sans:       'Google Sans Flex', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* ── Google Sans Flex (variable font — drop fonts into ./fonts/) ── */
+    @font-face {
+      font-family: 'Google Sans Flex';
+      src: url('fonts/GoogleSansFlex-VF.woff2') format('woff2-variations'),
+           url('fonts/GoogleSansFlex-VF.woff2') format('woff2');
+      font-weight: 100 900; font-style: normal; font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--foreground);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .caslon { font-family: var(--font-serif); }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ══════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════ */
+    .sidebar {
+      width: 256px;
+      min-width: 256px;
+      background: var(--sidebar-bg);
+      border-right: 0.5px solid var(--sidebar-border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color: #fff;
+    }
+
+    /* user row */
+    .sidebar-user-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 12px 4px;
+    }
+    .sidebar-user {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sidebar-user:hover { background: rgba(255,255,255,0.04); }
+    .sidebar-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #9ca8cd;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+      flex-shrink: 0;
+    }
+    .sidebar-username { flex:1; font-size:14px; font-weight:500; line-height:20px; color: var(--sidebar-fg); }
+    .sidebar-chevron-btn {
+      background: transparent; border: 0;
+      color: rgba(255,255,255,0.6);
+      display: flex; align-items: center; justify-content: center;
+      width:14px; height:14px;
+    }
+    .sidebar-collapse-btn {
+      background: transparent; border: 0;
+      padding: 8px; border-radius: 3px;
+      color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sidebar-collapse-btn:hover { background: rgba(255,255,255,0.06); }
+
+    /* nav */
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 8px 12px 12px;
+      overflow-y: auto;
+      gap: 0;
+    }
+    .nav-group { display:flex; flex-direction:column; gap:2px; }
+    .nav-spacer { flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 10px; border-radius: 8px;
+      font-size: 13.5px; line-height: 20.25px;
+      color: #fff; background: transparent; border: 0;
+      width: 100%; text-align: left;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); }
+    .nav-item.active { background: var(--sidebar-active); color: var(--sidebar-active-fg); font-weight: 500; }
+    .nav-icon { width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .nav-icon svg, .nav-icon img { width:100%; height:100%; display:block; }
+
+    /* Tracker dropdown */
+    .nav-tracker { display:flex; flex-direction:column; }
+    .nav-tracker-toggle .nav-label { flex:1; }
+    .nav-caret {
+      width:12px; height:12px; display:inline-flex; align-items:center; justify-content:center;
+      color: rgba(255,255,255,0.6);
+      transition: transform 0.18s;
+    }
+    .nav-tracker-toggle[aria-expanded="false"] .nav-caret { transform: rotate(-90deg); }
+    .nav-tracker-toggle.active .nav-caret { color: var(--sidebar-active-fg); }
+    .nav-sub {
+      display: flex; flex-direction: column;
+      padding-left: 36px; gap: 0;
+      max-height: 200px; overflow: hidden;
+      transition: max-height 0.2s ease;
+    }
+    .nav-sub.collapsed { max-height: 0; }
+    .nav-sub-item {
+      text-align: left;
+      padding: 8px 10px;
+      border: 0; background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px; line-height: 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .nav-sub-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .nav-sub-item.active { color: var(--sidebar-active-fg); font-weight: 500; }
+
+    /* sidebar bottom */
+    .sidebar-bottom {
+      border-top: 0.5px solid var(--sidebar-divider);
+      padding: 12.5px 12px 12px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .credits-block { display:flex; flex-direction:column; gap:6px; }
+    .credits-row { display:flex; align-items:center; justify-content:space-between; }
+    .credits-label { font-size:11px; font-weight:700; letter-spacing:0.66px; text-transform:uppercase; color: var(--sidebar-fg); line-height:16.5px; }
+    .credits-count { font-size:12px; font-weight:600; color: var(--sidebar-fg); line-height:18px; }
+    .credits-bar-track { background: rgba(123,143,201,0.25); border-radius:9999px; height:4px; overflow:hidden; }
+    .credits-bar-fill { background: #4c62a8; height:100%; width:70%; border-radius:9999px; }
+    .upgrade-btn {
+      background: #4c62a8; color: var(--sidebar-fg);
+      border: 0; border-radius: 3px;
+      padding: 10px 16px; font-size:14px; font-weight:500;
+      display: flex; align-items:center; justify-content:center; gap:8px;
+      line-height:20px; transition: filter 0.15s;
+    }
+    .upgrade-btn:hover { filter: brightness(1.05); }
+
+    /* ══════════════════════════════════════════
+       MAIN AREA
+    ══════════════════════════════════════════ */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+      background: var(--bg-surface);
+    }
+
+    /* Filter bar / header */
+    .filter-bar {
+      background: var(--bg-surface);
+      padding: 24px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      flex-shrink: 0;
+    }
+
+    .header-row { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; width:100%; }
+    .page-header-block { display:flex; flex-direction:column; gap:12px; }
+
+    /* Ask Scout button (top-right) */
+    .ask-scout-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: #fff; white-space: nowrap;
+      font-family: var(--font-sans);
+      font-size: 14px; font-weight: 400; color: var(--foreground);
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .ask-scout-btn:hover { border-color: var(--primary); box-shadow: 0 2px 6px rgba(74,96,168,0.12); }
+    .ask-scout-btn svg { width:16px; height:16px; flex-shrink:0; }
+
+    .page-title {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--heading);
+      white-space: nowrap;
+      /* Trim to cap height so vertical rhythm matches Figma (cap-box = 22px @ 32px) */
+      text-box-trim: trim-both;
+      text-box-edge: cap alphabetic;
+    }
+
+    .page-subtitle { font-size:16px; line-height:24px; color: var(--muted-fg); }
+
+    /* Toolbar row */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .toolbar-left { display:flex; align-items:center; gap:16px; flex:1; }
+
+    /* Search */
+    .search-wrap {
+      width: 480px;
+      height: 36px;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      padding: 4px 12px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .search-wrap svg { color: var(--neutral-300); flex-shrink:0; }
+    .search-input {
+      flex:1; border:0; outline:none;
+      font-size:14px; color: var(--foreground);
+      background:transparent; font-family:inherit;
+    }
+    .search-input::placeholder { color: var(--neutral-300); }
+
+    /* Filter & group buttons */
+    .toolbar-pill {
+      display: flex; align-items: center; gap: 6px;
+      height: 36px; padding: 0 10px;
+      border: 1px solid #e5e5e5; border-radius: 8px;
+      background: #fff; font-size:12px; font-weight:500;
+      color: var(--foreground); white-space:nowrap;
+      transition: border-color 0.15s;
+    }
+    .toolbar-pill:hover { border-color: var(--primary); color: var(--primary); }
+    .toolbar-pill.active { border-color: var(--primary); color: var(--primary); background: var(--primary-50); }
+    .toolbar-pill-icon { padding: 0 8px; width: 36px; justify-content: center; }
+    .toolbar-pill-bookmark.active svg path { fill: currentColor; }
+    .filter-badge {
+      width:14px; height:14px;
+      background: var(--badge-blue);
+      border-radius: 600px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:9px; color:#fff; font-weight:600; flex-shrink:0;
+    }
+    .filter-badge.empty { display:none; }
+
+    /* Filter dropdown menu */
+    .filter-dropdown { position: relative; }
+    .filter-menu {
+      position: absolute; top: calc(100% + 6px); left: 0;
+      min-width: 220px; z-index: 50;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.12);
+      display: none; flex-direction: column; gap: 2px;
+    }
+    .filter-menu.open { display: flex; }
+    .filter-menu-label {
+      font-size:10px; font-weight:700; letter-spacing:0.6px;
+      text-transform:uppercase; color: var(--ink-tertiary);
+      padding: 6px 10px 4px;
+    }
+    .filter-menu-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 8px 10px; border:0; background:transparent;
+      border-radius: 6px; font-size:13px; color: var(--foreground);
+      text-align:left; transition: background 0.12s;
+    }
+    .filter-menu-item:hover { background: var(--bg-surface); }
+    .filter-menu-item .filter-check { color: var(--primary); opacity: 0; font-size:12px; }
+    .filter-menu-item.active { color: var(--primary); font-weight:500; }
+    .filter-menu-item.active .filter-check { opacity: 1; }
+    .filter-menu-divider { height:1px; background: var(--border-light); margin: 6px 0; }
+    .filter-menu-clear {
+      padding: 8px 10px; border:0; background:transparent;
+      border-radius: 6px; font-size:13px; color: var(--subtle);
+      text-align:left; transition: background 0.12s;
+    }
+    .filter-menu-clear:hover { background: var(--bg-surface); }
+    .toolbar-pill.has-filter { border-color: var(--primary); color: var(--primary); }
+
+    /* Filter dropdown — checkbox filter section */
+    .filter-menu { min-width: 260px; max-height: 480px; overflow-y: auto; }
+    .filter-menu::-webkit-scrollbar { width: 4px; }
+    .filter-menu::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 20px; }
+    .filter-checkbox-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--foreground);
+      user-select: none;
+    }
+    .filter-checkbox-row:hover { background: var(--bg-surface); }
+    .filter-checkbox-row input[type="checkbox"] {
+      appearance: none; -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer; flex-shrink: 0;
+      position: relative;
+    }
+    .filter-checkbox-row input[type="checkbox"]:checked {
+      background: var(--primary); border-color: var(--primary);
+    }
+    .filter-checkbox-row input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px; top: 1px; width: 4px; height: 8px;
+      border: solid #fff; border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+    .filter-row-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* Active filters row (below toolbar) — pull up by 16px to counter the
+       parent .filter-bar's 32px row gap, giving an effective 16px gap from the toolbar */
+    .active-filters {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+      margin-top: -16px;
+    }
+    .active-filters[hidden] { display: none; }
+    .active-filters-label {
+      font-family: 'Inter', var(--font-sans);
+      font-size: 14px;
+      color: #94a3b8;
+      margin-right: 4px;
+    }
+    .active-filter-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 8px 6px 12px;
+      border-radius: 10px;
+      background: rgba(123,143,201,0.1);
+      border: 1px solid rgba(123,143,201,0.3);
+      height: 34px; box-sizing: border-box;
+    }
+    .active-filter-label {
+      font-family: 'Inter', var(--font-sans);
+      font-size: 14px; font-weight: 500;
+      color: #4c62a8;
+    }
+    .active-filter-count {
+      font-family: 'Inter', var(--font-sans);
+      font-size: 12px;
+      color: #4c62a8;
+      opacity: 0.75;
+    }
+    .active-filter-remove {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 0;
+      background: transparent;
+      color: #4c62a8;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
+      transition: background 0.12s;
+    }
+    .active-filter-remove:hover { background: rgba(123,143,201,0.2); }
+    .active-filter-remove svg { width: 12px; height: 12px; }
+    .active-filter-clear {
+      background: transparent; border: 0;
+      font-family: 'Inter', var(--font-sans);
+      font-size: 14px; font-weight: 500;
+      color: #94a3b8;
+      cursor: pointer; padding: 6px 8px;
+      transition: color 0.12s;
+    }
+    .active-filter-clear:hover { color: var(--accent-fg); }
+
+    /* View toggle */
+    .view-toggle {
+      display: flex; align-items: center;
+      height: 36px; padding: 4px; gap: 4px;
+      border: 1px solid #e5e5e5; border-radius: 8px;
+      background: #fff;
+      margin-left: auto;
+    }
+    .view-toggle-btn {
+      display: flex; align-items: center; justify-content: center;
+      height: 28px; padding: 6px 16px;
+      border: 0; background: transparent;
+      font-size:12px; color: var(--foreground);
+      border-radius: 6px; transition: background 0.12s, color 0.12s;
+    }
+    .view-toggle-btn.active {
+      background: var(--toggle-active);
+      color: #fff;
+      font-weight: 500;
+    }
+
+    /* ══════════════════════════════════════════
+       CONTENT AREA
+    ══════════════════════════════════════════ */
+    .content-area {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+      gap: 24px;
+      padding: 0 24px 24px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ──────── LEFT COLUMN ──────── */
+    .list-col {
+      width: 428px;
+      min-width: 428px;
+      background: #fff;
+      border: 1px solid var(--border-card);
+      border-top: 1px solid var(--border-card);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .list-col-inner {
+      flex: 1;
+      overflow-y: auto;
+      width: 100%;
+      padding: 20px 32px 0 24px;
+    }
+    .list-col-inner::-webkit-scrollbar { width: 4px; }
+    .list-col-inner::-webkit-scrollbar-track { background: transparent; }
+    .list-col-inner::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 20px; }
+
+    /* Segment tabs (PEOPLE / COMPANIES / HIRING MANAGERS) */
+    .segment-tabs {
+      display: flex;
+      width: 100%;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 24px;
+      margin-bottom: 0;
+    }
+
+    /* container to allow top padding around tabs */
+    .segment-tabs-wrap {
+      padding: 8px 32px 0 24px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+
+    .segment-btn {
+      flex: 1;
+      height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      color: #000; white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .segment-btn + .segment-btn { border-left: 0; }
+    .segment-btn:first-child { border-radius: 8px 0 0 8px; }
+    .segment-btn:last-child  { border-radius: 0 8px 8px 0; }
+    .segment-btn.active { background: var(--primary); color: #fff; }
+
+    /* Group headers */
+    .groups-root { width:100%; display:flex; flex-direction:column; }
+
+    .group-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 0;
+      width: 100%; cursor: pointer; user-select: none;
+      background: #fff;
+    }
+    .group-chevron {
+      width:16px; height:16px; flex-shrink:0;
+      color: var(--subtle); transition: transform 0.2s;
+      display:flex; align-items:center; justify-content:center;
+      transform: rotate(90deg);
+    }
+    .group-chevron.closed { transform: rotate(0deg); }
+    .group-chevron svg { width:100%; height:100%; display:block; }
+    .group-label {
+      font-size:11px; font-weight:700;
+      letter-spacing:1.38px; text-transform:uppercase;
+      color: var(--heading);
+    }
+    .group-count { font-size:11px; color: var(--subtle); margin-left:auto; }
+
+    .group-body { display:flex; flex-direction:column; gap:6px; width:100%; padding-bottom:4px; }
+    .group-body.collapsed { display:none; }
+
+    /* Companies segment — group header with logo placeholder + uppercase name */
+    .company-logo-placeholder {
+      width: 24px; height: 24px;
+      border-radius: 4px;
+      background: #d9d9d9;
+      flex-shrink: 0;
+    }
+
+    /* Contact cards */
+    .contact-card {
+      position: relative;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px; border-radius: 8px;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s;
+      width: 372px;
+      border: 1px solid transparent;
+      overflow: hidden;
+      gap: 12px;
+    }
+    .contact-card:hover { background: #fafbff; }
+    .contact-card.selected {
+      background: #fafbff;
+      border-color: #e2e8f0;
+    }
+    .contact-card.selected::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0;
+      width: 7px; height: 100px;
+      background: #6c80ba;
+    }
+
+    .contact-card-info { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
+
+    .contact-initials {
+      width:40px; height:40px; min-width:40px;
+      border-radius: 50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13.33px; font-weight:600; color:#fff;
+      background: var(--primary-200);
+    }
+    .contact-card.selected .contact-initials { background: var(--primary); }
+
+    .contact-text { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+    .contact-name {
+      font-size:18px; font-weight:400; color: var(--accent-fg);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      line-height: 1.2;
+    }
+    .contact-role {
+      font-size:12px; font-weight:400; color: #475569;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .contact-time { font-size:12px; color: var(--ink-tertiary); }
+
+    /* Status pill */
+    .status-pill {
+      display:flex; align-items:center; gap:4px;
+      padding: 3px 9px; border-radius:9999px;
+      background: var(--action-bg); flex-shrink:0;
+    }
+    .status-dot { width:5px; height:5px; border-radius:2.5px; background: var(--action-fg); flex-shrink:0; }
+    .status-text { font-size:11px; font-weight:500; color: var(--action-fg); white-space:nowrap; }
+
+    /* ──────── RIGHT COLUMN (Detail Panel) ──────── */
+    .detail-col {
+      flex: 1;
+      background: #fff;
+      border: 1px solid var(--border-card);
+      border-top: 1px solid var(--border-card);
+      border-radius: 32px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .detail-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .detail-scroll::-webkit-scrollbar { width: 4px; }
+    .detail-scroll::-webkit-scrollbar-track { background: transparent; }
+    .detail-scroll::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 20px; }
+
+    /* Contact info row */
+    .detail-info-row { display:flex; align-items:flex-start; gap:16px; }
+    .detail-avatar-info { display:flex; align-items:center; gap:16px; flex:1; min-width:0; }
+
+    .detail-avatar {
+      width:56px; height:56px; min-width:56px; border-radius:50%;
+      background: var(--primary);
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; font-weight:600; color:#fff;
+    }
+
+    .detail-identity { display:flex; flex-direction:column; gap:16px; flex:1; min-width:0; }
+    .detail-name-block { display:flex; flex-direction:column; gap:2px; }
+    .detail-name {
+      font-family: var(--font-sans);
+      font-size:18px; font-weight:400; color: var(--accent-fg);
+      line-height: 1.2;
+    }
+    .detail-role {
+      font-size:12px; font-weight:400;
+      color: #475569; text-transform:uppercase;
+    }
+
+    .detail-links { display:flex; gap:12px; align-items:center; }
+    .detail-link-pill {
+      display:flex; align-items:center; gap:6px;
+      padding: 7px 11px; border-radius:999px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      font-size:12px; color: var(--heading); text-decoration:none;
+      transition: border-color 0.15s;
+    }
+    .detail-link-pill:hover { border-color: var(--primary); }
+    .detail-link-pill svg { width:12px; height:12px; flex-shrink:0; }
+
+    .detail-action-btns { display:flex; gap:8px; align-items:center; flex-shrink:0; }
+    .icon-btn {
+      height:32px; padding:0 10px;
+      border: 1px solid var(--border); border-radius:10px;
+      background: #fff;
+      display:flex; align-items:center; justify-content:center;
+      transition: border-color 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--primary); }
+    .icon-btn svg { width:16px; height:16px; color:#555; }
+    .icon-btn-bookmark.active { color: var(--primary); border-color: var(--primary); background: var(--primary-50); }
+    .icon-btn-bookmark.active svg { color: var(--primary); }
+    .icon-btn-bookmark.active svg path { fill: currentColor; }
+
+    /* ── Pipeline Stage ── */
+    .section-heading {
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .section-label {
+      font-size:14px; font-weight:600;
+      letter-spacing:1.38px; text-transform:uppercase;
+      color: var(--heading);
+    }
+    .section-hint { font-size:10px; color: var(--subtle); }
+
+    .pipeline-wrap { position:relative; width:100%; }
+
+    .pipeline-dots-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .pipeline-track {
+      position: absolute;
+      top: 50%; left: 10%; right: 10%;
+      height: 2px;
+      background: #edeff3;
+      transform: translateY(-50%);
+      z-index: 0;
+    }
+    .pipeline-dot[data-clickable] { cursor: pointer; }
+    .pipeline-dot[data-clickable]:hover { box-shadow: 0 0 0 4px var(--primary-100); }
+    .pipeline-track-fill {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      width: 46%;
+      background: var(--primary);
+    }
+
+    .pipeline-dot-wrap { flex:1; display:flex; justify-content:center; position:relative; z-index:1; }
+
+    .pipeline-dot {
+      width:26px; height:26px; border-radius:50%;
+      border: 2px solid #edeff3;
+      background: #fff;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink: 0;
+    }
+    .pipeline-dot.done {
+      background: var(--primary); border-color: var(--primary);
+    }
+    .pipeline-dot.done svg { width:11px; height:11px; color:#fff; }
+    .pipeline-dot.active {
+      border-color: var(--primary); border-width: 2px; background:#fff;
+      box-shadow: 0 0 0 4px var(--primary-100);
+    }
+    .pipeline-dot.active::after {
+      content:''; width:9px; height:9px;
+      background: var(--primary); border-radius:50%;
+    }
+
+    .pipeline-stage-labels {
+      display:flex; width:100%; padding: 6px 0 0;
+    }
+    .pipeline-stage-name {
+      flex:1; text-align:center;
+      font-size:11px; font-weight:600; color: var(--heading);
+    }
+    .pipeline-stage-name.muted { font-weight:400; color: var(--subtle); }
+
+    /* ── Email Template ── */
+    .email-header-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .email-label { font-size:14px; font-weight:600; letter-spacing:1.38px; text-transform:uppercase; color: var(--heading); }
+    .email-pick { font-family: var(--font-serif); font-style:italic; font-size:14px; font-weight:600; letter-spacing:1px; color: var(--subtle); text-transform:lowercase; }
+    .ai-draft-badge {
+      display:flex; align-items:center; gap:4px;
+      padding:3px 8px; border-radius:9999px;
+      background: var(--action-bg);
+    }
+    .ai-draft-dot { width:5px; height:5px; border-radius:2.5px; background: var(--action-fg); }
+    .ai-draft-text { font-size:11px; font-weight:500; color: var(--action-fg); }
+
+    /* Template tiles */
+    .template-tiles { display:flex; align-items:stretch; width:100%; border-radius:4px; overflow:hidden; }
+    .template-tile {
+      flex:1; display:flex; flex-direction:column;
+      padding:12px; background: var(--bg-surface);
+      cursor:pointer; transition: background 0.12s;
+      border-top:2px solid transparent;
+    }
+    .template-tile + .template-tile { border-left: 1px solid var(--border-light); }
+    .template-tile.active { background:#fff; border-top:2px solid var(--primary); }
+    .template-tile-title-row { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
+    .template-tile-icon { width:12px; height:12px; flex-shrink:0; }
+    .template-tile-icon svg { width:100%; height:100%; }
+    .template-tile-title { font-size:14px; font-weight:600; color: var(--accent-fg); white-space:nowrap; }
+    .template-tile.active .template-tile-title { color: var(--primary); }
+    .template-tile-caption { font-size:12px; font-weight:300; color: var(--subtle); line-height:17.25px; }
+
+    /* Email fields */
+    .email-fields { display:flex; flex-direction:column; gap:8px; padding:0 8px; }
+
+    .email-field-row {
+      display:flex; align-items:center;
+      padding: 8px 0; border-bottom: 1px solid var(--border-light);
+    }
+    .email-field-label { font-size:12px; font-weight:400; color:#000; width:64px; flex-shrink:0; }
+    .email-field-value { font-size:12px; color: var(--subtle); }
+
+    .email-to-chip {
+      display:flex; align-items:center; gap:4px;
+      padding:3px 4px; border-radius:9999px;
+      background: rgba(74,96,168,0.1);
+    }
+    .chip-avatar {
+      width:16px; height:16px; border-radius:50%;
+      background: var(--primary);
+      display:flex; align-items:center; justify-content:center;
+      font-size:6px; font-weight:600; color:#fff;
+    }
+    .chip-name { font-size:8px; font-weight:500; color: var(--primary); }
+
+    /* Email body */
+    .email-body-wrap {
+      border-bottom: 1px solid var(--border-light);
+      padding: 8px;
+    }
+    .email-body-text {
+      font-size:12px; color:#1a1a1a; line-height:17.25px;
+      white-space: pre-wrap;
+    }
+
+    /* ── Detail footer ── */
+    .detail-footer {
+      display:flex; align-items:center; justify-content:space-between;
+      flex-shrink:0;
+      padding: 12px 24px;
+      border-top: 1px solid var(--border-light);
+    }
+    .save-draft {
+      font-size:14px; font-weight:500; color: var(--subtle);
+      text-decoration: underline; background:transparent; border:0;
+    }
+    .footer-btn-group { display:flex; gap:16px; align-items:center; }
+
+    .btn-secondary {
+      display:flex; align-items:center; gap:6px;
+      height:32px; padding:0 10px;
+      border: 1px solid var(--border); border-radius:10px; background:#fff;
+      font-size:14px; font-weight:500; color: var(--foreground);
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      transition: border-color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--primary); }
+    .btn-secondary svg { width:16px; height:16px; }
+
+    .btn-primary {
+      display:flex; align-items:center; gap:6px;
+      height:32px; padding:0 10px;
+      border:0; border-radius:10px;
+      background: var(--primary-dark);
+      font-size:14px; font-weight:500; color:#fff;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+      transition: filter 0.15s;
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary svg { width:16px; height:16px; }
+
+    /* divider */
+    .h-divider { height:1px; background: var(--border-light); width:100%; flex-shrink:0; }
+
+    /* ══════════════════════════════════════════
+       SPREADSHEET VIEW
+    ══════════════════════════════════════════ */
+    .spreadsheet-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0 24px 24px;
+      gap: 16px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .spreadsheet-card {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    /* Horizontal + vertical scroll container */
+    .spreadsheet-scroll {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
+    .spreadsheet-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+    .spreadsheet-scroll::-webkit-scrollbar-track { background: transparent; }
+    .spreadsheet-scroll::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 20px; }
+
+    .spreadsheet-table {
+      width: 100%;
+      min-width: 1280px; /* ensures horizontal scroll on narrow viewports */
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 14px;
+      color: var(--foreground);
+      font-family: var(--font-sans);
+    }
+    .spreadsheet-table thead th {
+      position: sticky; top: 0;
+      background: #fff;
+      z-index: 2;
+      text-align: left;
+      font-weight: 500; font-size: 14px;
+      color: var(--accent-fg);
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e5e5;
+      white-space: nowrap;
+    }
+    .spreadsheet-table tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #eef0f3;
+      white-space: nowrap;
+      color: var(--accent-fg);
+      vertical-align: middle;
+    }
+    .spreadsheet-table tbody tr:hover td { background: #fafbff; }
+    .spreadsheet-table .col-checkbox {
+      width: 32px; padding-left: 16px; padding-right: 0;
+    }
+    .row-checkbox {
+      appearance: none; -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: background 0.12s, border-color 0.12s;
+      position: relative;
+    }
+    .row-checkbox:checked { background: var(--primary); border-color: var(--primary); }
+    .row-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px; top: 1px; width: 4px; height: 8px;
+      border: solid #fff;
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+    .th-sortable {
+      display: inline-flex; align-items: center; gap: 6px;
+      cursor: pointer; user-select: none;
+    }
+    .sort-arrows { color: #94a3b8; display: inline-flex; }
+    .sort-arrows svg { width: 14px; height: 14px; }
+
+    .pipeline-chip {
+      display: inline-flex; align-items: center;
+      padding: 4px 10px; border-radius: 9999px;
+      background: var(--primary-50);
+      color: var(--primary);
+      font-size: 12px; font-weight: 500;
+    }
+    .action-cell { display: flex; gap: 4px; align-items: center; }
+    .action-icon {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border: 0; background: transparent; border-radius: 6px;
+      color: #64748b; cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .action-icon:hover { background: var(--bg-surface); color: var(--primary); }
+    .action-icon.active { color: var(--primary); }
+    .action-icon svg { width: 16px; height: 16px; }
+
+    /* Spreadsheet footer */
+    .spreadsheet-footer {
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+    .segment-pills {
+      display: flex; align-items: stretch;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .segment-pill {
+      padding: 10px 24px;
+      border: 0; background: transparent;
+      font-family: var(--font-sans);
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--foreground); cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .segment-pill + .segment-pill { border-left: 1px solid #e5e5e5; }
+    .segment-pill.active { background: var(--primary); color: #fff; }
+
+    .row-count { flex: 1; font-size: 13px; color: var(--subtle); }
+
+    .pagination { display: flex; align-items: center; gap: 8px; }
+    .page-info { font-size: 13px; color: var(--foreground); margin-right: 4px; }
+    .page-btn {
+      width: 32px; height: 32px;
+      border: 1px solid #e5e5e5; border-radius: 6px;
+      background: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--foreground);
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Toolbar context: only show certain buttons per view */
+    body[data-view="spreadsheet"] [data-view-only="default"] { display: none !important; }
+    body[data-view="default"] [data-view-only="spreadsheet"] { display: none !important; }
+
+    /* Tracker context: show network-tracker chrome vs job-tracker chrome.
+       Use direct-child selectors so the Job Tracker page's own filter bar isn't hit. */
+    body[data-tracker="job"]    > main > .filter-bar,
+    body[data-tracker="job"]    > main > .content-area,
+    body[data-tracker="job"]    > main > .spreadsheet-view { display: none !important; }
+    body[data-tracker="network"] > main > .job-tracker-page { display: none !important; }
+
+    /* ══════════════════════════════════════════
+       JOB TRACKER
+    ══════════════════════════════════════════ */
+    .job-tracker-page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .job-tracker-content {
+      flex: 1;
+      display: flex;
+      gap: 24px;
+      padding: 0 24px 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .job-list-col {
+      width: 440px; min-width: 440px;
+      display: flex; flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .job-list-col::-webkit-scrollbar { width: 4px; }
+    .job-list-col::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 20px; }
+    .job-section-title {
+      font-size: 13px; font-weight: 600; color: var(--accent-fg);
+      padding: 4px 4px 0;
+    }
+    .job-cards { display: flex; flex-direction: column; gap: 12px; }
+
+    .job-card {
+      position: relative;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: border-color 0.12s, box-shadow 0.12s;
+      overflow: hidden;
+    }
+    .job-card:hover { border-color: var(--primary); }
+    .job-card.selected { border-color: #e2e8f0; background: #fafbff; }
+    .job-card.selected::before {
+      content: ''; position: absolute;
+      left: 0; top: 0; bottom: 0; width: 6px;
+      background: #6c80ba;
+    }
+    .job-card-row { display: flex; gap: 12px; align-items: flex-start; }
+    .job-logo {
+      width: 40px; height: 40px;
+      border-radius: 6px;
+      background: #d9d9d9;
+      flex-shrink: 0;
+    }
+    .job-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .job-title { font-size: 15px; font-weight: 600; color: var(--accent-fg); line-height: 1.3; }
+    .job-company { font-size: 13px; color: #475569; }
+    .job-location { font-size: 12px; color: #64748b; }
+    .job-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .job-tag {
+      padding: 3px 8px; border-radius: 9999px;
+      background: var(--bg-surface);
+      font-size: 11px; color: #475569;
+    }
+
+    /* Job detail (right column) */
+    .job-detail-col {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-top: 1px solid #e5e5e5;
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      min-width: 0;
+    }
+    .job-detail-scroll { flex: 1; overflow-y: auto; }
+    .job-detail-scroll::-webkit-scrollbar { width: 4px; }
+    .job-detail-scroll::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 20px; }
+
+    /* Blue banner at top of right column */
+    .job-banner {
+      height: 107px;
+      background: #4a60a8;
+      flex-shrink: 0;
+    }
+
+    /* Content below the banner */
+    .job-detail-content {
+      padding: 21px 24px 0;
+      display: flex; flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Job header — logo + title + subtitle */
+    .job-card-header { display: flex; gap: 13.66px; align-items: flex-start; }
+    .job-card-logo-detail {
+      width: 41px; height: 41px;
+      border-radius: 8.54px;
+      background: #fff;
+      border: 0.854px solid #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-serif);
+      font-weight: 700; font-size: 18px;
+      color: var(--accent-fg);
+      flex-shrink: 0;
+    }
+    .job-card-text-detail { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3.4px; }
+    .job-card-title-detail {
+      font-family: var(--font-sans);
+      font-size: 18px; font-weight: 400;
+      color: var(--accent-fg);
+      line-height: 1.3;
+    }
+    .job-card-subtitle-detail {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: #475569;
+    }
+
+    /* Meta row (pin · clock · dollar) */
+    .job-meta-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .job-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: #64748b;
+      white-space: nowrap;
+    }
+    .job-meta-item.blue { color: #4c62a8; }
+    .job-meta-item svg { width: 13.66px; height: 13.66px; flex-shrink: 0; }
+
+    /* Save / Share / Apply buttons */
+    .job-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .job-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 14px; font-weight: 400;
+      cursor: pointer;
+      transition: filter 0.12s, background 0.12s, border-color 0.12s;
+    }
+    .job-btn.secondary {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      color: var(--foreground);
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+    .job-btn.secondary:hover { border-color: var(--primary); }
+    .job-btn.secondary svg { width: 16px; height: 16px; }
+    .job-btn.dark {
+      background: #1e2d4d;
+      border: 0;
+      color: #fff;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+    .job-btn.dark:hover { filter: brightness(1.15); }
+
+    /* Divider line */
+    .job-divider {
+      height: 1px; width: 100%;
+      border: 0;
+      background: #d1d4d9;
+      margin: 0;
+    }
+
+    /* Section wrapper (At a Glance, Description, Find People) */
+    .job-section {
+      display: flex; flex-direction: column;
+      gap: 12px;
+      padding: 24px 0;
+    }
+    .job-section h3 {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1.28px;
+      text-transform: uppercase;
+      color: var(--accent-fg);
+      margin: 0;
+      line-height: 1;
+    }
+
+    /* At a Glance */
+    .glance-items {
+      display: flex; flex-direction: column;
+      gap: 12px;
+    }
+    .glance-item {
+      display: flex; align-items: center; gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: #64748b;
+    }
+    .glance-item svg { width: 15.83px; height: 15.83px; flex-shrink: 0; }
+    .glance-item.blue { color: #4c62a8; }
+
+    /* Job description */
+    .job-description {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      color: #64748b;
+      white-space: pre-wrap;
+    }
+    .job-description a { color: #64748b; text-decoration: underline; }
+
+    /* Find People section */
+    .find-people-block { display: flex; flex-direction: column; gap: 4px; }
+    .find-people-subtitle {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+    .suggested-mix { display: flex; flex-direction: column; gap: 4px; }
+    .suggested-mix-title {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: #4c62a8;
+    }
+    .suggested-mix-title svg { width: 16px; height: 16px; }
+    .suggested-mix-subtext {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: #b0b4bb;
+    }
+
+    .people-types { display: flex; flex-direction: column; gap: 18px; }
+    .people-type-row {
+      display: flex; gap: 4px; align-items: flex-start;
+    }
+    .people-type-icon {
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .people-type-icon svg { width: 18px; height: 18px; }
+    .people-type-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
+    .people-type-title-row { display: flex; align-items: center; gap: 4px; }
+    .people-type-title {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: #64748b;
+    }
+    .people-type-info-icon { width: 12px; height: 12px; color: #b0b4bb; display: inline-flex; }
+    .people-type-info-icon svg { width: 12px; height: 12px; }
+    .people-type-credits {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: #9a9a9a;
+    }
+
+    .premium-pill {
+      display: inline-flex; align-items: center;
+      padding: 3px 12px;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #0098fe, #0033ff);
+      border: 0.865px solid rgba(76, 98, 168, 0.25);
+      color: #f3f3f6;
+      font-family: var(--font-sans);
+      font-size: 8.65px;
+    }
+
+    .counter { display: flex; align-items: center; gap: 20px; }
+    .counter-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #64748b;
+      font-size: 14px; padding: 0;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .counter-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .counter-btn svg { width: 12px; height: 12px; }
+    .counter-value {
+      font-family: var(--font-sans);
+      font-size: 14px; color: #000;
+      min-width: 10px; text-align: center;
+    }
+
+    .people-summary {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .find-people-btn {
+      background: #222944;
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 18px;
+      font-family: 'Inter', var(--font-sans);
+      font-size: 16px; font-weight: 600;
+      line-height: 17.08px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      cursor: pointer;
+      transition: filter 0.12s;
+    }
+    .find-people-btn:hover { filter: brightness(1.15); }
+    .find-people-btn svg { width: 13.33px; height: 13.33px; }
+
+    /* Left column job card meta row (location · type · salary) */
+    .job-card-meta-row {
+      display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    /* Job card status / match pills + dismiss button */
+    .job-card-pills { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+    .job-pill-new {
+      display: inline-flex; align-items: center;
+      padding: 2px 10px; border-radius: 9999px;
+      background: #d1fadf;
+      color: #047857;
+      border: 1px solid #6ee7b7;
+      font-family: var(--font-sans);
+      font-size: 11px; font-weight: 600;
+    }
+    .job-pill-match {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; border-radius: 9999px;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      font-family: var(--font-sans);
+      font-size: 11px; font-weight: 500;
+    }
+    .job-pill-match svg { width: 10px; height: 10px; color: #6ee7b7; }
+    .job-card-dismiss {
+      position: absolute; top: 12px; right: 12px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 0;
+      background: #f1f5f9;
+      color: #94a3b8;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
+      transition: background 0.12s, color 0.12s;
+    }
+    .job-card-dismiss:hover { background: #e2e8f0; color: var(--accent-fg); }
+    .job-card-dismiss svg { width: 10px; height: 10px; }
+
+    /* Dismissed-card state (placeholder shown after closing) */
+    .job-card.dismissed {
+      cursor: default;
+      border: 1px solid #e5e5e5;
+      padding: 16px;
+    }
+    .job-card.dismissed:hover { border-color: #e5e5e5; }
+    .job-card.dismissed .job-title,
+    .job-card.dismissed .job-company { color: #cbd5e1; }
+    .job-card.dismissed .job-card-meta-row,
+    .job-card.dismissed .job-tags,
+    .job-card.dismissed .job-card-pills { display: none; }
+    .job-card.dismissed::before { display: none; }
+    .job-card-dismissed-msg {
+      font-size: 12px; color: #4a60a8;
+      margin-top: 4px;
+    }
+    .job-card-undo {
+      position: absolute; top: 12px; right: 12px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 0;
+      background: transparent;
+      color: #94a3b8;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
+    }
+    .job-card-undo:hover { color: var(--accent-fg); }
+    .job-card-undo svg { width: 14px; height: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ SIDEBAR ══════════════════════════════ -->
+<aside class="sidebar">
+  <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden;">
+    <!-- User row -->
+    <div class="sidebar-user-row">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar"></div>
+        <span class="sidebar-username">John Doe</span>
+        <button class="sidebar-chevron-btn" aria-label="account menu">
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="white" stroke-opacity="0.45" stroke-width="1.16667" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <button class="sidebar-collapse-btn" aria-label="collapse sidebar">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.6667 2H3.33333C2.59695 2 2 2.59695 2 3.33333V12.6667C2 13.403 2.59695 14 3.33333 14H12.6667C13.403 14 14 13.403 14 12.6667V3.33333C14 2.59695 13.403 2 12.6667 2Z" stroke="white" stroke-opacity="0.45" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 2V14" stroke="white" stroke-opacity="0.45" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <button class="nav-item">
+          <span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 10.5L13.7 13.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+          Find
+        </button>
+        <button class="nav-item">
+          <span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.67 6V11.33C2.67 12.07 3.27 12.67 4 12.67H10C10.74 12.67 11.33 12.07 11.33 11.33V6H2.67Z" stroke="currentColor" stroke-width="1.33" stroke-linejoin="round"/><path d="M11.33 7.33H12.67C13.4 7.33 14 7.93 14 8.67C14 9.4 13.4 10 12.67 10H11.33" stroke="currentColor" stroke-width="1.33" stroke-linejoin="round"/><path d="M2 14.67H12" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M5.33 2V4M8 2V4M10.67 2V4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/></svg></span>
+          Coffee Chat Prep
+        </button>
+        <div class="nav-tracker">
+          <button class="nav-item nav-tracker-toggle active" id="trackerToggle" onclick="toggleTrackerMenu(event)" aria-expanded="true">
+            <span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.33"/><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.33"/><circle cx="8" cy="8" r="1" fill="currentColor"/></svg></span>
+            <span class="nav-label">Tracker</span>
+            <span class="nav-caret"><svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </button>
+          <div class="nav-sub" id="trackerSub">
+            <button class="nav-sub-item active" data-tracker="network" onclick="setTracker('network')">Network Tracker</button>
+            <button class="nav-sub-item"        data-tracker="job"     onclick="setTracker('job')">Job Tracker</button>
+          </div>
+        </div>
+      </div>
+      <div class="nav-spacer"></div>
+      <div class="nav-group">
+        <button class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.39067 1.724C8.14068 1.47393 7.80159 1.33341 7.448 1.33333H2.66667C2.31304 1.33333 1.97391 1.47381 1.72386 1.72386C1.47381 1.97391 1.33333 2.31304 1.33333 2.66667V7.448C1.33341 7.80159 1.47393 8.14068 1.724 8.39067L7.52667 14.1933C7.82968 14.4944 8.2395 14.6634 8.66667 14.6634C9.09384 14.6634 9.50366 14.4944 9.80667 14.1933L14.1933 9.80667C14.4944 9.50366 14.6634 9.09384 14.6634 8.66667C14.6634 8.2395 14.4944 7.82968 14.1933 7.52667L8.39067 1.724Z" stroke="#93C5FD" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 5.33333C5.18409 5.33333 5.33333 5.18409 5.33333 5C5.33333 4.8159 5.18409 4.66667 5 4.66667C4.8159 4.66667 4.66667 4.8159 4.66667 5C4.66667 5.18409 4.8159 5.33333 5 5.33333Z" fill="#93C5FD" stroke="#93C5FD" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Pricing
+        </button>
+        <button class="nav-item">
+          <span class="nav-icon">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 1.33333H4C3.64638 1.33333 3.30724 1.47381 3.05719 1.72386C2.80714 1.97391 2.66667 2.31304 2.66667 2.66667V13.3333C2.66667 13.687 2.80714 14.0261 3.05719 14.2761C3.30724 14.5262 3.64638 14.6667 4 14.6667H12C12.3536 14.6667 12.6928 14.5262 12.9428 14.2761C13.1929 14.0261 13.3333 13.687 13.3333 13.3333V4.66667L10 1.33333Z" stroke="#7DD3FC" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.33333 1.33333V4C9.33333 4.35362 9.47381 4.69276 9.72386 4.94281C9.97391 5.19286 10.313 5.33333 10.6667 5.33333H13.3333" stroke="#7DD3FC" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.66667 6H5.33333" stroke="#7DD3FC" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6667 8.66667H5.33333" stroke="#7DD3FC" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6667 11.3333H5.33333" stroke="#7DD3FC" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Documentation
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Credits + Upgrade -->
+  <div class="sidebar-bottom">
+    <div class="credits-block">
+      <div class="credits-row">
+        <span class="credits-label">Credits</span>
+        <span class="credits-count">210 / 300</span>
+      </div>
+      <div class="credits-bar-track"><div class="credits-bar-fill"></div></div>
+    </div>
+    <button class="upgrade-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.66667 9.33333C2.54051 9.33376 2.41682 9.29839 2.30997 9.23132C2.20312 9.16425 2.11749 9.06824 2.06303 8.95444C2.00858 8.84064 1.98753 8.71372 2.00233 8.58844C2.01714 8.46315 2.06719 8.34464 2.14667 8.24667L8.74667 1.44667C8.79617 1.38952 8.86364 1.3509 8.93799 1.33715C9.01234 1.32341 9.08915 1.33534 9.15582 1.371C9.22249 1.40666 9.27506 1.46393 9.30489 1.53341C9.33472 1.60288 9.34005 1.68043 9.32 1.75333L8.04 5.76667C8.00226 5.86768 7.98958 5.97635 8.00306 6.08334C8.01654 6.19033 8.05577 6.29245 8.11739 6.38095C8.17901 6.46945 8.26118 6.54168 8.35685 6.59144C8.45252 6.6412 8.55883 6.66702 8.66667 6.66667H13.3333C13.4595 6.66624 13.5832 6.70161 13.69 6.76868C13.7969 6.83575 13.8825 6.93176 13.937 7.04556C13.9914 7.15936 14.0125 7.28628 13.9977 7.41156C13.9829 7.53685 13.9328 7.65536 13.8533 7.75333L7.25333 14.5533C7.20383 14.6105 7.13636 14.6491 7.06201 14.6628C6.98766 14.6766 6.91085 14.6647 6.84418 14.629C6.77751 14.5933 6.72494 14.5361 6.69511 14.4666C6.66528 14.3971 6.65995 14.3196 6.68 14.2467L7.96 10.2333C7.99774 10.1323 8.01042 10.0237 7.99694 9.91666C7.98346 9.80967 7.94423 9.70755 7.88261 9.61905C7.82099 9.53055 7.73882 9.45832 7.64315 9.40856C7.54748 9.3588 7.44117 9.33298 7.33333 9.33333H2.66667Z" fill="#FACC15" stroke="#FACC15" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Upgrade Plan
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════ MAIN ══════════════════════════════ -->
+<main class="main">
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="header-row">
+      <div class="page-header-block">
+        <h1 class="page-title">Network Tracker</h1>
+        <p class="page-subtitle">100 total (contacts)</p>
+      </div>
+      <button class="ask-scout-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="4" cy="3.33" r="1.33" stroke="currentColor" stroke-width="1.33"/>
+          <circle cx="12" cy="12.67" r="1.33" stroke="currentColor" stroke-width="1.33"/>
+          <path d="M10 3.33H11.33C12.07 3.33 12.67 3.93 12.67 4.67V11.33" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.67 5L12.67 3L14.67 5" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 12.67H4.67C3.93 12.67 3.33 12.07 3.33 11.33V4.67" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.33 11L3.33 13L1.33 11" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Ask Scout
+      </button>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <!-- Search -->
+        <div class="search-wrap">
+          <svg width="17.575" height="17.575" viewBox="0 0 17.575 17.575" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 13C4.68333 13 3.146 12.3707 1.888 11.112C0.63 9.85333 0.000667196 8.316 5.29101e-07 6.5C-0.000666138 4.684 0.628667 3.14667 1.888 1.888C3.14733 0.629333 4.68467 0 6.5 0C8.31533 0 9.853 0.629333 11.113 1.888C12.373 3.14667 13.002 4.684 13 6.5C13 7.23333 12.8833 7.925 12.65 8.575C12.4167 9.225 12.1 9.8 11.7 10.3L17.3 15.9C17.4833 16.0833 17.575 16.3167 17.575 16.6C17.575 16.8833 17.4833 17.1167 17.3 17.3C17.1167 17.4833 16.8833 17.575 16.6 17.575C16.3167 17.575 16.0833 17.4833 15.9 17.3L10.3 11.7C9.8 12.1 9.225 12.4167 8.575 12.65C7.925 12.8833 7.23333 13 6.5 13ZM6.5 11C7.75 11 8.81267 10.5627 9.688 9.688C10.5633 8.81333 11.0007 7.75067 11 6.5C10.9993 5.24933 10.562 4.187 9.688 3.313C8.814 2.439 7.75133 2.00133 6.5 2C5.24867 1.99867 4.18633 2.43633 3.313 3.313C2.43967 4.18967 2.002 5.252 2 6.5C1.998 7.748 2.43567 8.81067 3.313 9.688C4.19033 10.5653 5.25267 11.0027 6.5 11Z" fill="#64748B"/></svg>
+          <input class="search-input" type="text" placeholder="Search by Name, Company or Title..." />
+        </div>
+
+        <!-- More Filters -->
+        <div class="filter-dropdown">
+          <button class="toolbar-pill" id="filterBtn" onclick="toggleFilterMenu(event)" aria-haspopup="true" aria-expanded="false">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.66667 14V9.33333" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.66667 6.66667V2" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 14V8" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 5.33333V2" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.3333 14V10.6667" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.3333 8V2" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.33333 9.33333H4" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.66667 5.33333H9.33333" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10.6667H14.6667" stroke="#475569" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            More Filters
+            <div class="filter-badge" id="filterBadge">0</div>
+          </button>
+          <div class="filter-menu" id="filterMenu" role="menu">
+            <div class="filter-menu-label">Sort by</div>
+            <button class="filter-menu-item" role="menuitemradio" data-sort="name-asc" onclick="setSort('name-asc')">
+              <span>Name (A–Z)</span><span class="filter-check">✓</span>
+            </button>
+            <button class="filter-menu-item" role="menuitemradio" data-sort="name-desc" onclick="setSort('name-desc')">
+              <span>Name (Z–A)</span><span class="filter-check">✓</span>
+            </button>
+            <button class="filter-menu-item" role="menuitemradio" data-sort="date-newest" onclick="setSort('date-newest')">
+              <span>Date added (Newest)</span><span class="filter-check">✓</span>
+            </button>
+            <button class="filter-menu-item" role="menuitemradio" data-sort="date-oldest" onclick="setSort('date-oldest')">
+              <span>Date added (Oldest)</span><span class="filter-check">✓</span>
+            </button>
+            <button class="filter-menu-item" role="menuitemradio" data-sort="company-asc" onclick="setSort('company-asc')">
+              <span>Company (A–Z)</span><span class="filter-check">✓</span>
+            </button>
+
+            <div class="filter-menu-divider"></div>
+            <div class="filter-menu-label">Work mode</div>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="mode:remote"  onchange="toggleFilter(this)"><span>Remote</span><span class="filter-row-count">2,847</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="mode:hybrid"  onchange="toggleFilter(this)"><span>Hybrid</span><span class="filter-row-count">1,902</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="mode:onsite"  onchange="toggleFilter(this)"><span>On-site</span><span class="filter-row-count">1,251</span></label>
+
+            <div class="filter-menu-divider"></div>
+            <div class="filter-menu-label">Job type</div>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="type:fulltime" onchange="toggleFilter(this)"><span>Full-time</span><span class="filter-row-count">4,123</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="type:parttime" onchange="toggleFilter(this)"><span>Part-time</span><span class="filter-row-count">562</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="type:contract" onchange="toggleFilter(this)"><span>Contract</span><span class="filter-row-count">419</span></label>
+
+            <div class="filter-menu-divider"></div>
+            <div class="filter-menu-label">Salary</div>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="salary:50k"  onchange="toggleFilter(this)"><span>$50k+</span><span class="filter-row-count">5,210</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="salary:75k"  onchange="toggleFilter(this)"><span>$75k+</span><span class="filter-row-count">3,840</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="salary:100k" onchange="toggleFilter(this)"><span>$100k+</span><span class="filter-row-count">1,856</span></label>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="salary:150k" onchange="toggleFilter(this)"><span>$150k+</span><span class="filter-row-count">824</span></label>
+
+            <div class="filter-menu-divider"></div>
+            <label class="filter-checkbox-row"><input type="checkbox" data-filter="quickApply"   onchange="toggleFilter(this)"><span>Quick Apply</span><span class="filter-row-count">3,421</span></label>
+
+            <div class="filter-menu-divider"></div>
+            <button class="filter-menu-clear" onclick="clearAllFilters()">Clear all</button>
+          </div>
+        </div>
+
+        <!-- Default-view toolbar: Bookmarked + Group -->
+        <button class="toolbar-pill toolbar-pill-bookmark" id="bookmarkedBtn" data-view-only="default" onclick="toggleBookmarked(this)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.8333 14.5L8.16667 11.8333L3.5 14.5V3.83333C3.5 3.47971 3.64048 3.14057 3.89052 2.89052C4.14057 2.64048 4.47971 2.5 4.83333 2.5H11.5C11.8536 2.5 12.1928 2.64048 12.4428 2.89052C12.6929 3.14057 12.8333 3.47971 12.8333 3.83333V14.5Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Bookmarked
+        </button>
+        <button class="toolbar-pill" data-view-only="default">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.66667" stroke="#0A0A0A" stroke-width="1.33333"/><path d="M8 5.33333V10.6667" stroke="#0A0A0A" stroke-width="1.33333" stroke-linecap="round"/><path d="M5.33333 8H10.6667" stroke="#0A0A0A" stroke-width="1.33333" stroke-linecap="round"/></svg>
+          Group
+        </button>
+
+        <!-- Spreadsheet-view toolbar: Import CSV + Export + bookmark/archive icon buttons -->
+        <button class="toolbar-pill" data-view-only="spreadsheet">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10V2M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.67 10v2.67c0 .74.6 1.33 1.33 1.33h8c.74 0 1.33-.6 1.33-1.33V10" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Import CSV
+        </button>
+        <button class="toolbar-pill" data-view-only="spreadsheet">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.67 10v2.67c0 .74.6 1.33 1.33 1.33h8c.74 0 1.33-.6 1.33-1.33V10" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Export
+        </button>
+        <button class="toolbar-pill toolbar-pill-icon" data-view-only="spreadsheet" aria-label="Bookmarked items">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.83 14.5L8.17 11.83L3.5 14.5V3.83C3.5 3.10 4.10 2.5 4.83 2.5H11.5C12.23 2.5 12.83 3.10 12.83 3.83V14.5Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="toolbar-pill toolbar-pill-icon" data-view-only="spreadsheet" aria-label="Archive">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.83" y="5.83" width="10.33" height="7.33" rx="1" stroke="currentColor" stroke-width="1.33"/><rect x="1.5" y="2.5" width="13" height="3.33" rx="0.67" stroke="currentColor" stroke-width="1.33"/><line x1="6.83" y1="8.83" x2="9.5" y2="8.83" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <!-- View toggle -->
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" onclick="setView(this)">Default</button>
+        <button class="view-toggle-btn" onclick="setView(this)">Spreadsheet</button>
+      </div>
+    </div>
+
+    <!-- Active filters row -->
+    <div class="active-filters" hidden><!-- populated by renderActiveFilters() --></div>
+  </div>
+
+  <!-- Content area (Default view) -->
+  <div class="content-area" data-view-only="default">
+
+    <!-- ──── LEFT: Contact List ──── -->
+    <div class="list-col">
+      <!-- Segment tabs -->
+      <div class="segment-tabs-wrap">
+        <div class="segment-tabs">
+          <button class="segment-btn active" data-segment="people" onclick="setSegment(this)">People</button>
+          <button class="segment-btn" data-segment="companies" onclick="setSegment(this)">Companies</button>
+          <button class="segment-btn" data-segment="hiringManagers" onclick="setSegment(this)">Hiring Managers</button>
+        </div>
+      </div>
+
+      <div class="list-col-inner">
+        <div class="groups-root" id="groups-root"><!-- populated by JS --></div>
+      </div><!-- /list-col-inner -->
+    </div><!-- /list-col -->
+
+    <!-- ──── RIGHT: Contact Detail ──── -->
+    <div class="detail-col">
+      <div class="detail-scroll">
+
+        <!-- Contact info -->
+        <div class="detail-info-row">
+          <div class="detail-avatar-info">
+            <div class="detail-avatar" id="detailAvatar">CM</div>
+            <div class="detail-identity">
+              <div class="detail-name-block">
+                <div class="detail-name" id="detailName">Contact Name</div>
+                <div class="detail-role" id="detailRole">Product Designer at Apple</div>
+              </div>
+              <div class="detail-links">
+                <a class="detail-link-pill" href="#">
+                  <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 0H2.5C1.1195 0 0 1.1195 0 2.5V9.5C0 10.8805 1.1195 12 2.5 12H9.5C10.881 12 12 10.8805 12 9.5V2.5C12 1.1195 10.881 0 9.5 0ZM4 9.5H2.5V4H4V9.5ZM3.25 3.366C2.767 3.366 2.375 2.971 2.375 2.484C2.375 1.997 2.767 1.602 3.25 1.602C3.733 1.602 4.125 1.997 4.125 2.484C4.125 2.971 3.7335 3.366 3.25 3.366ZM10 9.5H8.5V6.698C8.5 5.014 6.5 5.1415 6.5 6.698V9.5H5V4H6.5V4.8825C7.198 3.5895 10 3.494 10 6.1205V9.5Z" fill="#1E2D4D"/></svg>
+                  LinkedIn
+                </a>
+                <a class="detail-link-pill" href="#">
+                  <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2H10C10.55 2 11 2.45 11 3V9C11 9.55 10.55 10 10 10H2C1.45 10 1 9.55 1 9V3C1 2.45 1.45 2 2 2Z" stroke="#1E2D4D"/><path d="M11 3L6 6.5L1 3" stroke="#1E2D4D"/></svg>
+                  <span id="detailEmail">contact@email.com</span>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="detail-action-btns">
+            <button class="icon-btn icon-btn-bookmark" id="bookmarkIconBtn" aria-label="Bookmark" onclick="toggleSelectedBookmark()">
+              <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.8333 14.5L8.16667 11.8333L3.5 14.5V3.83333C3.5 3.47971 3.64048 3.14057 3.89052 2.89052C4.14057 2.64048 4.47971 2.5 4.83333 2.5H11.5C11.8536 2.5 12.1928 2.64048 12.4428 2.89052C12.6929 3.14057 12.8333 3.47971 12.8333 3.83333V14.5Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="icon-btn" aria-label="Archive">
+              <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.83333 5.83333V13.1667C2.83333 13.5203 2.97381 13.8594 3.22386 14.1095C3.47391 14.3595 3.81304 14.5 4.16667 14.5H12.1667C12.5203 14.5 12.8594 14.3595 13.1095 14.1095C13.3595 13.8594 13.5 13.5203 13.5 13.1667V5.83333M6.83333 8.5H9.5M2.16667 2.5H14.1667C14.5349 2.5 14.8333 2.79848 14.8333 3.16667V5.16667C14.8333 5.53486 14.5349 5.83333 14.1667 5.83333H2.16667C1.79848 5.83333 1.5 5.53486 1.5 5.16667V3.16667C1.5 2.79848 1.79848 2.5 2.16667 2.5Z" stroke="#767676" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pipeline Stage -->
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div class="section-heading">
+            <span class="section-label">Pipeline Stage</span>
+            <span class="section-hint">Click a stage to update</span>
+          </div>
+
+          <div class="pipeline-wrap" id="pipelineWrap"><!-- populated by JS --></div>
+        </div>
+
+        <!-- Email Template -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="email-header-row">
+            <span class="email-label">Email Template</span>
+            <span class="email-pick">- pick one</span>
+            <div class="ai-draft-badge">
+              <div class="ai-draft-dot"></div>
+              <span class="ai-draft-text">AI Draft</span>
+            </div>
+          </div>
+
+          <!-- Template tiles -->
+          <div class="template-tiles">
+            <div class="template-tile" data-template="networking" onclick="setTemplate(this)">
+              <div class="template-tile-title-row">
+                <span class="template-tile-icon">
+                  <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="4.5" cy="3.5" r="1.5" stroke="#0F172A" stroke-width="0.9"/><circle cx="8.5" cy="7.5" r="1.5" stroke="#0F172A" stroke-width="0.9"/><circle cx="2.5" cy="9" r="1.2" stroke="#0F172A" stroke-width="0.9"/><path d="M5.5 4.5L7.5 6.5" stroke="#0F172A" stroke-width="0.9" stroke-linecap="round"/><path d="M3.5 8L7 8" stroke="#0F172A" stroke-width="0.9" stroke-linecap="round"/></svg>
+                </span>
+                <span class="template-tile-title">Networking</span>
+              </div>
+              <p class="template-tile-caption">Warm intro to start a conversation</p>
+            </div>
+            <div class="template-tile" data-template="referral" onclick="setTemplate(this)">
+              <div class="template-tile-title-row">
+                <span class="template-tile-icon">
+                  <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L4.5 8.5L2 6" stroke="#0F172A" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="template-tile-title">Referral Request</span>
+              </div>
+              <p class="template-tile-caption">Ask for an intro or referral</p>
+            </div>
+            <div class="template-tile active" data-template="followup" onclick="setTemplate(this)">
+              <div class="template-tile-title-row">
+                <span class="template-tile-icon">
+                  <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.97 7.02C9.6 8.5 8.3 9.6 6.7 9.7C5.1 9.8 3.65 8.85 3.05 7.4C2.5 6 2.9 4.4 4.05 3.4C5.2 2.4 6.9 2.3 8.1 3.2" stroke="#4A60A8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 2V4.5H6.5" stroke="#4A60A8" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="template-tile-title">Follow Up</span>
+              </div>
+              <p class="template-tile-caption">Gentle nudge after a prior note</p>
+            </div>
+          </div>
+
+          <!-- Email fields -->
+          <div class="email-fields">
+            <div class="email-field-row">
+              <span class="email-field-label">To</span>
+              <div class="email-to-chip">
+                <div class="chip-avatar" id="chipAvatar">CM</div>
+                <span class="chip-name" id="chipName">Contact Name</span>
+              </div>
+            </div>
+            <div class="email-field-row">
+              <span class="email-field-label">From</span>
+              <span class="email-field-value">useremail@gmail.com</span>
+            </div>
+            <div class="email-field-row">
+              <span class="email-field-label">Subject</span>
+              <span class="email-field-value" id="emailSubject">auto generated subject line</span>
+            </div>
+          </div>
+
+          <!-- Email body -->
+          <div class="email-body-wrap">
+            <div class="email-body-text" id="emailBody"></div>
+          </div>
+        </div>
+
+      </div><!-- /detail-scroll -->
+
+      <!-- Footer actions -->
+      <div class="detail-footer">
+        <button class="save-draft">Save Draft</button>
+        <div class="footer-btn-group">
+          <button class="btn-secondary">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.8 14.83V15.18H2V14.83H13.8ZM10.05 1.05C10.12 0.98 10.23 0.98 10.3 1.05L12.32 3.07C12.39 3.14 12.39 3.25 12.32 3.32L4.32 11.32H2V8.97L10.05 1.05Z" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"/></svg>
+            Edit Template
+          </button>
+          <button class="btn-primary">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.25 8.74L1.25 6.07L14.58 1.4L9.92 14.74L7.25 8.74ZM14.58 1.4L7.25 8.74" stroke="white" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Send via Gmail
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /detail-col -->
+  </div><!-- /content-area -->
+
+  <!-- ──── Spreadsheet view ──── -->
+  <div class="spreadsheet-view" data-view-only="spreadsheet">
+    <div class="spreadsheet-card">
+      <div class="spreadsheet-scroll">
+        <table class="spreadsheet-table">
+          <thead>
+            <tr>
+              <th class="col-checkbox"><input type="checkbox" class="row-checkbox" id="selectAllRows" onclick="toggleAllRows(this)"></th>
+              <th>Contact</th>
+              <th>
+                <span class="th-sortable" onclick="sortSpreadsheet('email')">
+                  Email
+                  <span class="sort-arrows"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4l-2 2M5 4l2 2M5 4v8M11 12l-2-2M11 12l2-2M11 12V4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </span>
+              </th>
+              <th>
+                <span class="th-sortable" onclick="sortSpreadsheet('company')">
+                  Company
+                  <span class="sort-arrows"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4l-2 2M5 4l2 2M5 4v8M11 12l-2-2M11 12l2-2M11 12V4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </span>
+              </th>
+              <th>
+                <span class="th-sortable" onclick="sortSpreadsheet('role')">
+                  Role
+                  <span class="sort-arrows"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4l-2 2M5 4l2 2M5 4v8M11 12l-2-2M11 12l2-2M11 12V4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </span>
+              </th>
+              <th>
+                <span class="th-sortable" onclick="sortSpreadsheet('pipeline')">
+                  Pipeline
+                  <span class="sort-arrows"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4l-2 2M5 4l2 2M5 4v8M11 12l-2-2M11 12l2-2M11 12V4" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </span>
+              </th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="spreadsheetBody"><!-- rows by JS --></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="spreadsheet-footer">
+      <div class="segment-pills">
+        <button class="segment-pill active" data-segment="people"        onclick="setSegmentPill(this)">PEOPLE</button>
+        <button class="segment-pill"        data-segment="companies"     onclick="setSegmentPill(this)">COMPANIES</button>
+        <button class="segment-pill"        data-segment="hiringManagers" onclick="setSegmentPill(this)">HIRING MANAGERS</button>
+      </div>
+      <div class="row-count" id="rowCount">0 of 0 row(s) selected.</div>
+      <div class="pagination">
+        <span class="page-info" id="pageInfo">Page 1 of 1</span>
+        <button class="page-btn" onclick="gotoPage('first')" aria-label="First page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4L6 8L10 12"/><path d="M6 4L2 8L6 12"/></svg></button>
+        <button class="page-btn" onclick="gotoPage('prev')"  aria-label="Previous page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4L6 8L10 12"/></svg></button>
+        <button class="page-btn" onclick="gotoPage('next')"  aria-label="Next page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4L10 8L6 12"/></svg></button>
+        <button class="page-btn" onclick="gotoPage('last')"  aria-label="Last page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4L10 8L6 12"/><path d="M10 4L14 8L10 12"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────── Job Tracker page ──────── -->
+  <div class="job-tracker-page">
+    <div class="filter-bar">
+      <div class="header-row">
+        <div class="page-header-block">
+          <h1 class="page-title">Job Tracker</h1>
+          <p class="page-subtitle">100 total (contacts)</p>
+        </div>
+        <button class="ask-scout-btn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="4" cy="3.33" r="1.33" stroke="currentColor" stroke-width="1.33"/>
+            <circle cx="12" cy="12.67" r="1.33" stroke="currentColor" stroke-width="1.33"/>
+            <path d="M10 3.33H11.33C12.07 3.33 12.67 3.93 12.67 4.67V11.33" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10.67 5L12.67 3L14.67 5" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 12.67H4.67C3.93 12.67 3.33 12.07 3.33 11.33V4.67" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5.33 11L3.33 13L1.33 11" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Ask Scout
+        </button>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap">
+            <svg width="17.575" height="17.575" viewBox="0 0 17.575 17.575" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 13C4.68 13 3.14 12.37 1.89 11.11C0.63 9.85 0 8.32 0 6.5C0 4.68 0.63 3.15 1.89 1.89C3.15 0.63 4.68 0 6.5 0C8.32 0 9.85 0.63 11.11 1.89C12.37 3.15 13 4.68 13 6.5C13 7.23 12.88 7.93 12.65 8.58C12.42 9.23 12.1 9.8 11.7 10.3L17.3 15.9C17.48 16.08 17.58 16.32 17.58 16.6C17.58 16.88 17.48 17.12 17.3 17.3C17.12 17.48 16.88 17.58 16.6 17.58C16.32 17.58 16.08 17.48 15.9 17.3L10.3 11.7C9.8 12.1 9.23 12.42 8.58 12.65C7.93 12.88 7.23 13 6.5 13Z" fill="#64748B"/></svg>
+            <input class="search-input" type="text" placeholder="Search by Name, Company or Title..." />
+          </div>
+          <button class="toolbar-pill">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.67 14V9.33M2.67 6.67V2M8 14V8M8 5.33V2M13.33 14V10.67M13.33 8V2M1.33 9.33H4M6.67 5.33H9.33M12 10.67H14.67" stroke="#475569" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            More Filters
+            <div class="filter-badge">2</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active filters row (Job Tracker) -->
+      <div class="active-filters" hidden><!-- populated by renderActiveFilters() --></div>
+    </div>
+
+    <div class="job-tracker-content">
+      <div class="job-list-col">
+        <div class="job-section-title">Recent job postings</div>
+        <div class="job-cards" id="recentJobs"><!-- by JS --></div>
+        <div class="job-section-title">Recommended for you</div>
+        <div class="job-cards" id="recommendedJobs"><!-- by JS --></div>
+      </div>
+
+      <div class="job-detail-col">
+        <div class="job-detail-scroll" id="jobDetail">
+          <!-- populated by renderJobDetail() -->
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  /* ── Model ── */
+  const GROUPS = ['saved', 'contacted', 'connected', 'interviewing', 'offer'];
+  const GROUP_LABELS = { saved: 'Saved', contacted: 'Contacted', connected: 'Connected', interviewing: 'Interviewing', offer: 'Offer' };
+  const STAGE_LABELS = ['Saved', 'Contacted', 'Connected', 'Interviewing', 'Offer'];
+  const GROUP_TO_STAGE = { saved: 0, contacted: 1, connected: 2, interviewing: 3, offer: 4 };
+  const STAGE_TO_GROUP = { 0: 'saved', 1: 'contacted', 2: 'connected', 3: 'interviewing', 4: 'offer' };
+
+  const C = (name, role, company, daysAgo, status, email, bookmarked = false) => ({ name, role, company, daysAgo, status, email, bookmarked });
+
+  const DATA = {
+    people: {
+      saved: [
+        C('Contact Name', 'role @whatever company', 'Whatever Company', 12, 'Action', 'contact@email.com', true),
+        C('Jordan Smith', 'Product Manager @Innovatech', 'Innovatech', 3, 'Edit', 'jordan.smith@innovatech.com'),
+        C('Alicia Lee', 'UX Designer @Creative Labs', 'Creative Labs', 1, 'View', 'alicia.lee@creativelabs.com', true),
+        C('Marcus Thompson', 'CTO @NextGen Solutions', 'NextGen Solutions', 7, 'Delete', 'marcus@nextgen.com'),
+        C('Emma Rodriguez', 'Marketing Lead @BrightFuture Inc', 'BrightFuture Inc', 5, 'Share', 'emma.r@brightfuture.com'),
+        C('Priya Patel', 'Data Scientist @Quantly', 'Quantly', 9, 'Action', 'priya@quantly.io'),
+      ],
+      contacted: [
+        C('Daniel Brooks', 'Software Engineer @Stripe', 'Stripe', 6, 'Edit', 'daniel.brooks@stripe.com'),
+        C('Olivia Wong', 'Product Designer @Canva', 'Canva', 4, 'View', 'olivia.wong@canva.com'),
+      ],
+      connected: [
+        C('Marcus Johnson', 'Engineering Manager @Airbnb', 'Airbnb', 10, 'View', 'marcus.j@airbnb.com', true),
+        C('Sofia Garcia', 'Designer @Figma', 'Figma', 4, 'Edit', 'sofia@figma.com'),
+        C('Liam Chen', 'Product Manager @Stripe', 'Stripe', 6, 'Action', 'liam.chen@stripe.com'),
+      ],
+      interviewing: [
+        C('Lena Adams', 'Recruiter @Google', 'Google', 3, 'View', 'lena.adams@google.com'),
+        C('Noah Williams', 'Eng Lead @Meta', 'Meta', 2, 'Edit', 'noah.w@meta.com'),
+        C('Ava Martinez', 'Designer @Netflix', 'Netflix', 8, 'Action', 'ava@netflix.com'),
+      ],
+      offer: [
+        C('Tyler Webb', 'HR Director @OpenAI', 'OpenAI', 1, 'View', 'tyler.webb@openai.com', true),
+        C('Maya Singh', 'Recruiter @Anthropic', 'Anthropic', 2, 'Edit', 'maya@anthropic.com'),
+      ],
+    },
+    companies: {
+      saved: [
+        C('Innovatech', 'B2B SaaS · San Francisco', 'Innovatech', 12, 'Action', 'careers@innovatech.com', true),
+        C('Creative Labs', 'Design Agency · New York', 'Creative Labs', 5, 'Edit', 'hello@creativelabs.com'),
+        C('Quantly', 'Data Analytics · Remote', 'Quantly', 8, 'View', 'jobs@quantly.io'),
+        C('BrightFuture Inc', 'EdTech · Austin', 'BrightFuture Inc', 3, 'Share', 'team@brightfuture.com'),
+      ],
+      contacted: [
+        C('Stripe', 'Fintech · San Francisco', 'Stripe', 6, 'View', 'careers@stripe.com'),
+        C('Canva', 'Design Tools · Sydney', 'Canva', 4, 'Edit', 'jobs@canva.com'),
+      ],
+      connected: [
+        C('Airbnb', 'Travel & Hospitality · SF', 'Airbnb', 10, 'View', 'careers@airbnb.com'),
+        C('Figma', 'Design Tools · SF', 'Figma', 6, 'Action', 'jobs@figma.com'),
+      ],
+      interviewing: [
+        C('Google', 'Big Tech · Mountain View', 'Google', 4, 'View', 'hiring@google.com'),
+        C('Netflix', 'Streaming · Los Gatos', 'Netflix', 7, 'Edit', 'talent@netflix.com'),
+      ],
+      offer: [
+        C('OpenAI', 'AI Research · San Francisco', 'OpenAI', 2, 'View', 'careers@openai.com'),
+      ],
+    },
+    hiringManagers: {
+      saved: [
+        C('Rachel Green', 'Eng Manager @Shopify', 'Shopify', 11, 'Action', 'rachel.green@shopify.com'),
+        C('David Kim', 'Design Director @Adobe', 'Adobe', 4, 'Edit', 'david.kim@adobe.com', true),
+        C('Sara Olsen', 'Head of Product @Notion', 'Notion', 6, 'View', 'sara@notion.so'),
+      ],
+      contacted: [
+        C('Ethan Moore', 'Talent Lead @Airtable', 'Airtable', 5, 'Edit', 'ethan.moore@airtable.com'),
+      ],
+      connected: [
+        C('James Carter', 'VP Engineering @Dropbox', 'Dropbox', 9, 'View', 'james.carter@dropbox.com'),
+        C('Nina Brooks', 'Recruiting Lead @Slack', 'Slack', 5, 'Action', 'nina@slack.com'),
+      ],
+      interviewing: [
+        C('Omar Haddad', 'Eng Director @Uber', 'Uber', 3, 'Edit', 'omar.h@uber.com'),
+      ],
+      offer: [
+        C('Grace Liu', 'CTO @Linear', 'Linear', 1, 'View', 'grace@linear.app'),
+      ],
+    },
+  };
+
+  /* ── State ── */
+  const USER_EMAIL = 'useremail@gmail.com';
+  const USER_NAME = 'User Name';
+  let currentSegment = 'people';
+  let currentSort = null;
+  let currentTemplate = 'followup';
+  let openGroups = { saved: true, contacted: false, connected: false, interviewing: false, offer: false };
+  let selectedContact = null, selectedGroup = null;
+
+  /* ── Helpers ── */
+  function initials(name) {
+    const p = name.trim().split(/\s+/);
+    return ((p[0]?.[0] || '') + (p[1]?.[0] || '')).toUpperCase();
+  }
+  function sortContacts(arr) {
+    const a = arr.slice();
+    switch (currentSort) {
+      case 'name-asc': a.sort((x, y) => x.name.localeCompare(y.name)); break;
+      case 'name-desc': a.sort((x, y) => y.name.localeCompare(x.name)); break;
+      case 'date-newest': a.sort((x, y) => x.daysAgo - y.daysAgo); break;
+      case 'date-oldest': a.sort((x, y) => y.daysAgo - x.daysAgo); break;
+      case 'company-asc': a.sort((x, y) => x.company.localeCompare(y.company)); break;
+    }
+    return a;
+  }
+
+  /* ── Render: contact list ── */
+  // For Companies in the default view, the contacts come from the People pool — grouped by company.
+  function sourceSegment(viewSeg) {
+    return viewSeg === 'companies' ? 'people' : viewSeg;
+  }
+  function renderList() {
+    const root = document.getElementById('groups-root');
+    root.innerHTML = '';
+    if (currentSegment === 'companies') return renderCompaniesList(root);
+    const seg = DATA[currentSegment];
+    let anyShown = false;
+    GROUPS.forEach(gkey => {
+      let contacts = sortContacts(seg[gkey]);
+      if (bookmarkedOnly) contacts = contacts.filter(c => c.bookmarked);
+      // Hide group entirely when filtering and there's nothing to show
+      if (bookmarkedOnly && contacts.length === 0) return;
+      anyShown = anyShown || contacts.length > 0;
+
+      const header = document.createElement('div');
+      header.className = 'group-header';
+      header.onclick = () => toggleGroup(gkey);
+      header.innerHTML =
+        `<span class="group-chevron ${openGroups[gkey] ? '' : 'closed'}">` +
+        `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="1.33333"/></svg>` +
+        `</span>` +
+        `<span class="group-label">${GROUP_LABELS[gkey]}</span>` +
+        `<span class="group-count">${contacts.length}</span>`;
+      root.appendChild(header);
+
+      const body = document.createElement('div');
+      body.className = 'group-body' + (openGroups[gkey] ? '' : ' collapsed');
+      contacts.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'contact-card' + (c === selectedContact ? ' selected' : '');
+        card.onclick = () => selectContact(c, gkey, card);
+        const displayRole = c.role.replace(/\s*@\s*/, ' · ');
+        card.innerHTML =
+          `<div class="contact-card-info">` +
+            `<div class="contact-initials">${initials(c.name)}</div>` +
+            `<div class="contact-text">` +
+              `<div class="contact-name">${c.name}</div>` +
+              `<div class="contact-role">${displayRole}</div>` +
+              `<div class="contact-time">${timeAgo(c.daysAgo)}</div>` +
+            `</div>` +
+          `</div>` +
+          `<div class="status-pill"><div class="status-dot"></div><span class="status-text">${c.status}</span></div>`;
+        body.appendChild(card);
+      });
+      root.appendChild(body);
+    });
+
+    // Empty state when filtering by bookmark with no results
+    if (bookmarkedOnly && !anyShown) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding: 32px 12px; text-align:center; color: var(--subtle); font-size: 13px;';
+      empty.textContent = 'No bookmarked contacts yet — tap the bookmark icon on a card to add one.';
+      root.appendChild(empty);
+    }
+  }
+
+  /* Companies view — group People by their company name, alphabetical, logo placeholder */
+  function renderCompaniesList(root) {
+    const seg = DATA.people;
+    const byCompany = {};
+    GROUPS.forEach(g => seg[g].forEach(c => {
+      const k = (c.company || 'Other').trim();
+      (byCompany[k] = byCompany[k] || []).push({ c, group: g });
+    }));
+    let companyNames = Object.keys(byCompany).sort((a, b) => a.localeCompare(b));
+    if (bookmarkedOnly) {
+      companyNames.forEach(name => { byCompany[name] = byCompany[name].filter(x => x.c.bookmarked); });
+      companyNames = companyNames.filter(n => byCompany[n].length > 0);
+    }
+    if (companyNames.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding: 32px 12px; text-align:center; color: var(--subtle); font-size: 13px;';
+      empty.textContent = bookmarkedOnly ? 'No bookmarked contacts yet.' : 'No companies to display.';
+      root.appendChild(empty);
+      return;
+    }
+    companyNames.forEach((name, idx) => {
+      const key = `company:${name}`;
+      if (bookmarkedOnly) openGroups[key] = true;                             // when filtering, expand all
+      else if (!(key in openGroups)) openGroups[key] = (idx === 0);           // otherwise, first company expanded by default
+
+      const header = document.createElement('div');
+      header.className = 'group-header';
+      header.onclick = () => { openGroups[key] = !openGroups[key]; renderList(); };
+      header.innerHTML =
+        `<span class="group-chevron ${openGroups[key] ? '' : 'closed'}">` +
+          `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="1.33333"/></svg>` +
+        `</span>` +
+        `<div class="company-logo-placeholder"></div>` +
+        `<span class="group-label">${name.toUpperCase()}</span>` +
+        `<span class="group-count">${byCompany[name].length}</span>`;
+      root.appendChild(header);
+
+      const body = document.createElement('div');
+      body.className = 'group-body' + (openGroups[key] ? '' : ' collapsed');
+      byCompany[name].forEach(({ c, group }) => {
+        const card = document.createElement('div');
+        card.className = 'contact-card' + (c === selectedContact ? ' selected' : '');
+        card.onclick = () => selectContact(c, group, card);
+        const displayRole = c.role.replace(/\s*@\s*/, ' · ');
+        card.innerHTML =
+          `<div class="contact-card-info">` +
+            `<div class="contact-initials">${initials(c.name)}</div>` +
+            `<div class="contact-text">` +
+              `<div class="contact-name">${c.name}</div>` +
+              `<div class="contact-role">${displayRole}</div>` +
+              `<div class="contact-time">${timeAgo(c.daysAgo)}</div>` +
+            `</div>` +
+          `</div>` +
+          `<div class="status-pill"><div class="status-dot"></div><span class="status-text">${c.status}</span></div>`;
+        body.appendChild(card);
+      });
+      root.appendChild(body);
+    });
+  }
+
+  function timeAgo(days) {
+    if (days >= 7) {
+      const w = Math.round(days / 7);
+      return `${w} week${w === 1 ? '' : 's'} ago`;
+    }
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
+
+  /* ── Render: detail panel ── */
+  function selectContact(c, gkey, cardEl) {
+    selectedContact = c; selectedGroup = gkey;
+    document.querySelectorAll('.contact-card.selected').forEach(el => el.classList.remove('selected'));
+    if (cardEl) cardEl.classList.add('selected');
+    renderDetail(c, gkey);
+  }
+  function renderDetail(c, gkey) {
+    if (!c) return;
+    document.getElementById('detailAvatar').textContent = initials(c.name);
+    document.getElementById('detailName').textContent = c.name;
+    document.getElementById('detailRole').textContent = c.role;
+    document.getElementById('detailEmail').textContent = c.email;
+    document.getElementById('chipAvatar').textContent = initials(c.name);
+    document.getElementById('chipName').textContent = c.name;
+    const bmBtn = document.getElementById('bookmarkIconBtn');
+    if (bmBtn) {
+      bmBtn.classList.toggle('active', !!c.bookmarked);
+      bmBtn.setAttribute('aria-pressed', !!c.bookmarked);
+      bmBtn.setAttribute('aria-label', c.bookmarked ? 'Remove bookmark' : 'Add bookmark');
+    }
+    renderPipeline(GROUP_TO_STAGE[gkey]);
+    renderEmail();
+  }
+
+  /* Toggle bookmark on the currently selected contact (right-panel button) */
+  function toggleSelectedBookmark() {
+    if (!selectedContact) return;
+    selectedContact.bookmarked = !selectedContact.bookmarked;
+    const bmBtn = document.getElementById('bookmarkIconBtn');
+    bmBtn.classList.toggle('active', selectedContact.bookmarked);
+    bmBtn.setAttribute('aria-pressed', selectedContact.bookmarked);
+    bmBtn.setAttribute('aria-label', selectedContact.bookmarked ? 'Remove bookmark' : 'Add bookmark');
+    // If the Bookmarked filter is on, the list must re-render so unbookmarked cards disappear
+    if (bookmarkedOnly) renderList();
+  }
+
+  /* ── Email generation: body + subject match the selected template ── */
+  function emailTemplates(c) {
+    const first = c.name.split(/\s+/)[0];
+    const company = c.company || 'your team';
+    return {
+      networking: {
+        subject: `Would love to connect, ${first}`,
+        body:
+`Hi ${first},
+
+I've been following ${company}'s work and really admire what you're building. I'm currently exploring this space and would love to learn from your experience.
+
+Would you be open to a quick 15-minute chat over the next couple of weeks? I'd genuinely value your perspective and any advice you might have.
+
+Thanks so much for your time — looking forward to connecting.
+
+Best,
+${USER_NAME}`
+      },
+      referral: {
+        subject: `Referral request — ${company}`,
+        body:
+`Hi ${first},
+
+I hope you're doing well! I'm reaching out because I'm very interested in opportunities at ${company}, and I thought you'd have great insight into the team.
+
+Would you be open to referring me, or pointing me toward the right person to speak with? I'm happy to send over my resume and a short summary of my background to make it easy.
+
+I really appreciate any help you can offer — thank you!
+
+Best,
+${USER_NAME}`
+      },
+      followup: {
+        subject: `Following up, ${first}`,
+        body:
+`Hi ${first},
+
+I wanted to follow up on my previous note — I know things get busy! I'm still very interested in connecting and learning more about your work at ${company}.
+
+If you have a few minutes in the coming days, I'd love to find a time that works for you. No worries at all if now isn't the right moment.
+
+Thanks again, and looking forward to hearing from you.
+
+Best,
+${USER_NAME}`
+      }
+    };
+  }
+  function renderEmail() {
+    if (!selectedContact) return;
+    const t = emailTemplates(selectedContact)[currentTemplate];
+    document.getElementById('emailSubject').textContent = t.subject;
+    document.getElementById('emailBody').textContent = t.body;
+  }
+
+  /* ── Render: pipeline (correlates with the group/dropdown) ── */
+  function renderPipeline(activeIdx) {
+    const wrap = document.getElementById('pipelineWrap');
+    const fillPct = activeIdx * 25; // 5 dots → 0/25/50/75/100
+    let dots = '';
+    for (let i = 0; i < 5; i++) {
+      let cls = 'pipeline-dot', inner = '';
+      if (i < activeIdx) {
+        cls += ' done';
+        inner = '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L4.5 8.5L2 6" stroke="white" stroke-width="1.5"/></svg>';
+      } else if (i === activeIdx) {
+        cls += ' active';
+      }
+      const clickable = STAGE_TO_GROUP.hasOwnProperty(i);
+      dots += `<div class="pipeline-dot-wrap"><div class="${cls}"${clickable ? ` data-clickable onclick="updateStage(${i})"` : ''}>${inner}</div></div>`;
+    }
+    let labels = '';
+    for (let i = 0; i < 5; i++) {
+      labels += `<span class="pipeline-stage-name${i > activeIdx ? ' muted' : ''}">${STAGE_LABELS[i]}</span>`;
+    }
+    wrap.innerHTML =
+      `<div class="pipeline-dots-row">` +
+        `<div class="pipeline-track"><div class="pipeline-track-fill" style="width:${fillPct}%"></div></div>` +
+        dots +
+      `</div>` +
+      `<div class="pipeline-stage-labels">${labels}</div>`;
+  }
+
+  /* ── Update stage: move contact to the matching dropdown ── */
+  function updateStage(stageIdx) {
+    if (!selectedContact) return;
+    const newGroup = STAGE_TO_GROUP[stageIdx];
+    if (!newGroup || newGroup === selectedGroup) return;
+    const seg = DATA[sourceSegment(currentSegment)];
+    const arr = seg[selectedGroup];
+    const idx = arr.indexOf(selectedContact);
+    if (idx > -1) arr.splice(idx, 1);
+    selectedContact.daysAgo = 0;
+    seg[newGroup].unshift(selectedContact);
+    selectedGroup = newGroup;
+    // In People/Hiring Managers view, keep the destination group expanded
+    if (currentSegment !== 'companies') openGroups[newGroup] = true;
+    renderList();
+    renderDetail(selectedContact, newGroup);
+  }
+
+  /* ── Group collapse/expand ── */
+  function toggleGroup(gkey) {
+    openGroups[gkey] = !openGroups[gkey];
+    renderList();
+  }
+
+  /* ── Segment switch (People / Companies / Hiring Managers) ── */
+  function setSegment(btn) {
+    document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSegment = btn.dataset.segment;
+    openGroups = (currentSegment === 'companies')
+      ? {}  // company groups initialize themselves (first one expanded)
+      : { saved: true, contacted: false, connected: false, interviewing: false, offer: false };
+    selectFirst();
+    renderList();
+  }
+  function selectFirst() {
+    const seg = DATA[sourceSegment(currentSegment)];
+    for (const g of GROUPS) {
+      if (seg[g] && seg[g].length) {
+        selectedContact = sortContacts(seg[g])[0];
+        selectedGroup = g;
+        renderDetail(selectedContact, g);
+        return;
+      }
+    }
+    selectedContact = null; selectedGroup = null;
+  }
+
+  /* ── More Filters (sorting) ── */
+  function toggleFilterMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('filterMenu');
+    const open = menu.classList.toggle('open');
+    document.getElementById('filterBtn').setAttribute('aria-expanded', open);
+  }
+  function closeFilterMenu() {
+    document.getElementById('filterMenu').classList.remove('open');
+    document.getElementById('filterBtn').setAttribute('aria-expanded', 'false');
+  }
+  function setSort(key) {
+    currentSort = key;
+    document.querySelectorAll('.filter-menu-item').forEach(it =>
+      it.classList.toggle('active', it.dataset.sort === key));
+    updateFilterBadge();
+    closeFilterMenu();
+    renderList();
+  }
+
+  /* ── Active filters (multi-select) ── */
+  const activeFilters = new Set();
+  const FILTER_LABELS = {
+    'mode:remote':'Remote', 'mode:hybrid':'Hybrid', 'mode:onsite':'On-site',
+    'type:fulltime':'Full-time', 'type:parttime':'Part-time', 'type:contract':'Contract',
+    'salary:50k':'$50k+', 'salary:75k':'$75k+', 'salary:100k':'$100k+', 'salary:150k':'$150k+',
+    'quickApply':'Quick Apply'
+  };
+  const FILTER_COUNTS = {
+    'mode:remote':'2,847','mode:hybrid':'1,902','mode:onsite':'1,251',
+    'type:fulltime':'4,123','type:parttime':'562','type:contract':'419',
+    'salary:50k':'5,210','salary:75k':'3,840','salary:100k':'1,856','salary:150k':'824',
+    'quickApply':'3,421'
+  };
+  const ICON_X_SMALL = `<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="10.5" y1="3.5" x2="3.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+  function toggleFilter(cb) {
+    const id = cb.dataset.filter;
+    if (cb.checked) activeFilters.add(id);
+    else activeFilters.delete(id);
+    updateFilterBadge();
+    renderActiveFilters();
+  }
+  function removeFilter(id) {
+    activeFilters.delete(id);
+    // Sync the checkbox state in the menu
+    const cb = document.querySelector(`.filter-checkbox-row input[data-filter="${id}"]`);
+    if (cb) cb.checked = false;
+    updateFilterBadge();
+    renderActiveFilters();
+  }
+  function clearAllFilters() {
+    activeFilters.clear();
+    currentSort = null;
+    // Reset all menu state
+    document.querySelectorAll('.filter-checkbox-row input').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.filter-menu-item').forEach(it => it.classList.remove('active'));
+    updateFilterBadge();
+    renderActiveFilters();
+    renderList();
+    closeFilterMenu();
+  }
+  function updateFilterBadge() {
+    const count = activeFilters.size + (currentSort ? 1 : 0);
+    const badge = document.getElementById('filterBadge');
+    const btn = document.getElementById('filterBtn');
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.classList.remove('empty');
+      btn.classList.add('has-filter');
+    } else {
+      badge.textContent = '0';
+      badge.classList.add('empty');
+      btn.classList.remove('has-filter');
+    }
+  }
+  function renderActiveFilters() {
+    const html = activeFilters.size === 0 ? '' :
+      `<span class="active-filters-label">Active filters:</span>` +
+      [...activeFilters].map(id =>
+        `<span class="active-filter-pill">` +
+          `<span class="active-filter-label">${FILTER_LABELS[id] || id}</span>` +
+          `<span class="active-filter-count">(${FILTER_COUNTS[id] || ''})</span>` +
+          `<button class="active-filter-remove" onclick="removeFilter('${id}')" aria-label="Remove ${FILTER_LABELS[id] || id}">${ICON_X_SMALL}</button>` +
+        `</span>`
+      ).join('') +
+      `<button class="active-filter-clear" onclick="clearAllFilters()">Clear all</button>`;
+    document.querySelectorAll('.active-filters').forEach(el => {
+      el.innerHTML = html;
+      el.hidden = activeFilters.size === 0;
+    });
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.filter-dropdown')) closeFilterMenu();
+  });
+
+  /* ── Bookmarked filter toggle ── */
+  let bookmarkedOnly = false;
+  function toggleBookmarked(btn) {
+    bookmarkedOnly = !bookmarkedOnly;
+    btn.classList.toggle('active', bookmarkedOnly);
+    if (bookmarkedOnly) {
+      // Expand every group so all bookmarked contacts are visible at once
+      openGroups = (currentSegment === 'companies')
+        ? {}    // company groups are force-opened in render when bookmarkedOnly
+        : { saved: true, contacted: true, connected: true, interviewing: true, offer: true };
+    }
+    renderList();
+  }
+
+  /* ── View + template toggles ── */
+  function setView(btn) {
+    document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const view = btn.textContent.trim().toLowerCase();           // "default" or "spreadsheet"
+    document.body.dataset.view = view;
+    // Show/hide content sections
+    document.querySelectorAll('main > [data-view-only]').forEach(el => {
+      el.hidden = (el.dataset.viewOnly !== view);
+    });
+    if (view === 'spreadsheet') {
+      // Sync segment pills with currentSegment
+      document.querySelectorAll('.segment-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.segment === currentSegment);
+      });
+      renderSpreadsheet();
+    }
+  }
+
+  /* ── Spreadsheet view ── */
+  const ROWS_PER_PAGE = 25;
+  let spreadsheetPage = 1;
+  let spreadsheetSort = null;        // { key, dir }  e.g. { key:'email', dir:'asc' }
+  const selectedRows = new Set();    // identity by row index within the current sorted list
+
+  function flatContacts(segKey) {
+    const seg = DATA[segKey];
+    const arr = [];
+    GROUPS.forEach(g => seg[g].forEach(c => arr.push({ c, group: g })));
+    return arr;
+  }
+  function sortSpreadsheetRows(rows) {
+    if (!spreadsheetSort) return rows;
+    const { key, dir } = spreadsheetSort;
+    const mul = dir === 'asc' ? 1 : -1;
+    const getVal = (r) => {
+      if (key === 'email')    return r.c.email || '';
+      if (key === 'company')  return r.c.company || '';
+      if (key === 'role')     return (r.c.role || '').split(/\s*[@·]\s*/)[0];
+      if (key === 'pipeline') return GROUP_TO_STAGE[r.group];
+      return '';
+    };
+    return rows.slice().sort((a, b) => {
+      const av = getVal(a), bv = getVal(b);
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mul;
+      return String(av).localeCompare(String(bv)) * mul;
+    });
+  }
+  function sortSpreadsheet(key) {
+    if (spreadsheetSort && spreadsheetSort.key === key) {
+      spreadsheetSort.dir = spreadsheetSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      spreadsheetSort = { key, dir: 'asc' };
+    }
+    renderSpreadsheet();
+  }
+  function renderSpreadsheet() {
+    const body = document.getElementById('spreadsheetBody');
+    const all = sortSpreadsheetRows(flatContacts(currentSegment));
+    const totalPages = Math.max(1, Math.ceil(all.length / ROWS_PER_PAGE));
+    if (spreadsheetPage > totalPages) spreadsheetPage = totalPages;
+    const start = (spreadsheetPage - 1) * ROWS_PER_PAGE;
+    const pageRows = all.slice(start, start + ROWS_PER_PAGE);
+    body.innerHTML = '';
+    pageRows.forEach((row, i) => {
+      const c = row.c;
+      const globalIdx = start + i;
+      const stage = GROUP_LABELS[row.group];
+      const roleOnly = (c.role || '').split(/\s*[@·]\s*/)[0];
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td class="col-checkbox"><input type="checkbox" class="row-checkbox" ${selectedRows.has(globalIdx) ? 'checked' : ''} data-idx="${globalIdx}"></td>` +
+        `<td>${c.name}</td>` +
+        `<td>${c.email}</td>` +
+        `<td>${c.company}</td>` +
+        `<td>${roleOnly}</td>` +
+        `<td><span class="pipeline-chip">${stage}</span></td>` +
+        `<td class="action-cell">` +
+          `<button class="action-icon" aria-label="Send"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7.25 8.74L1.25 6.07L14.58 1.4L9.92 14.74L7.25 8.74Z"/><path d="M14.58 1.4L7.25 8.74"/></svg></button>` +
+          `<button class="action-icon row-bookmark${c.bookmarked ? ' active' : ''}" aria-label="Bookmark"><svg viewBox="0 0 16 16" fill="${c.bookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 14.5L8.17 11.83L3.5 14.5V3.83C3.5 3.10 4.10 2.5 4.83 2.5H11.5C12.23 2.5 12.83 3.10 12.83 3.83V14.5Z"/></svg></button>` +
+          `<button class="action-icon" aria-label="Archive"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="11" height="9" rx="1"/><line x1="2" y1="6" x2="14" y2="6"/></svg></button>` +
+        `</td>`;
+      // Wire up the row checkbox
+      tr.querySelector('.row-checkbox').addEventListener('click', (e) => {
+        const idx = +e.target.dataset.idx;
+        if (e.target.checked) selectedRows.add(idx); else selectedRows.delete(idx);
+        updateRowCount(all.length);
+      });
+      // Bookmark toggle on the row
+      tr.querySelector('.row-bookmark').addEventListener('click', () => {
+        c.bookmarked = !c.bookmarked;
+        renderSpreadsheet();
+      });
+      body.appendChild(tr);
+    });
+    updateRowCount(all.length);
+    document.getElementById('pageInfo').textContent = `Page ${spreadsheetPage} of ${totalPages}`;
+    // Disable pagination buttons at boundaries
+    const [first, prev, next, last] = document.querySelectorAll('.page-btn');
+    first.disabled = prev.disabled = (spreadsheetPage === 1);
+    next.disabled  = last.disabled = (spreadsheetPage === totalPages);
+    // Sync header "select all" checkbox
+    const selAll = document.getElementById('selectAllRows');
+    selAll.checked = pageRows.length > 0 && pageRows.every((_, i) => selectedRows.has(start + i));
+  }
+  function updateRowCount(total) {
+    document.getElementById('rowCount').textContent = `${selectedRows.size} of ${total} row(s) selected.`;
+  }
+  function toggleAllRows(el) {
+    const all = sortSpreadsheetRows(flatContacts(currentSegment));
+    const start = (spreadsheetPage - 1) * ROWS_PER_PAGE;
+    const end = Math.min(start + ROWS_PER_PAGE, all.length);
+    if (el.checked) {
+      for (let i = start; i < end; i++) selectedRows.add(i);
+    } else {
+      for (let i = start; i < end; i++) selectedRows.delete(i);
+    }
+    renderSpreadsheet();
+  }
+  function gotoPage(action) {
+    const total = Math.max(1, Math.ceil(flatContacts(currentSegment).length / ROWS_PER_PAGE));
+    if (action === 'first') spreadsheetPage = 1;
+    else if (action === 'last') spreadsheetPage = total;
+    else if (action === 'prev') spreadsheetPage = Math.max(1, spreadsheetPage - 1);
+    else if (action === 'next') spreadsheetPage = Math.min(total, spreadsheetPage + 1);
+    renderSpreadsheet();
+  }
+  function setSegmentPill(btn) {
+    document.querySelectorAll('.segment-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSegment = btn.dataset.segment;
+    // Keep the default-view tabs in sync
+    document.querySelectorAll('.segment-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.segment === currentSegment);
+    });
+    selectedRows.clear();
+    spreadsheetPage = 1;
+    selectFirst();
+    renderSpreadsheet();
+  }
+  function setTemplate(tile) {
+    document.querySelectorAll('.template-tile').forEach(t => t.classList.remove('active'));
+    tile.classList.add('active');
+    currentTemplate = tile.dataset.template;
+    renderEmail();
+  }
+
+  /* ── Tracker dropdown (sidebar nav) ── */
+  function toggleTrackerMenu(e) {
+    if (e) e.stopPropagation();
+    const toggle = document.getElementById('trackerToggle');
+    const sub = document.getElementById('trackerSub');
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', !expanded);
+    sub.classList.toggle('collapsed', expanded);
+  }
+  function setTracker(which) {
+    document.body.dataset.tracker = which;     // "network" or "job"
+    document.querySelectorAll('.nav-sub-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.tracker === which);
+    });
+    // Keep the dropdown open
+    document.getElementById('trackerToggle').setAttribute('aria-expanded', 'true');
+    document.getElementById('trackerSub').classList.remove('collapsed');
+    document.title = (which === 'job' ? 'Job Tracker' : 'Network Tracker');
+    if (which === 'job') renderJobTracker();
+  }
+
+  /* ── Job Tracker data + render ── */
+  // Icon SVGs (shared across left + right column)
+  const ICON_PIN     = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.33C5.79 1.33 4 3.13 4 5.33C4 8.67 8 14.67 8 14.67C8 14.67 12 8.67 12 5.33C12 3.13 10.21 1.33 8 1.33Z" stroke="currentColor" stroke-width="1.33"/><circle cx="8" cy="5.5" r="1.5" stroke="currentColor" stroke-width="1.33"/></svg>`;
+  const ICON_CLOCK   = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6.33" stroke="currentColor" stroke-width="1.33"/><path d="M8 4.67V8L10 9.33" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const ICON_DOLLAR  = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 5.33H6.67C6.04 5.33 5.5 5.87 5.5 6.5C5.5 7.13 6.04 7.67 6.67 7.67H9.33C9.96 7.67 10.5 8.21 10.5 8.83C10.5 9.46 9.96 10 9.33 10H5.5" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M8 3.5V12.5" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/></svg>`;
+  const ICON_BOOKMARK = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.83 14.5L8.17 11.83L3.5 14.5V3.83C3.5 3.10 4.10 2.5 4.83 2.5H11.5C12.23 2.5 12.83 3.10 12.83 3.83V14.5Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const ICON_SHARE   = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="4" cy="8" r="2" stroke="currentColor" stroke-width="1.33"/><circle cx="12" cy="4" r="2" stroke="currentColor" stroke-width="1.33"/><circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.33"/><line x1="5.67" y1="7" x2="10.33" y2="5" stroke="currentColor" stroke-width="1.33"/><line x1="5.67" y1="9" x2="10.33" y2="11" stroke="currentColor" stroke-width="1.33"/></svg>`;
+  const ICON_SPARKLE = `<svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 1L10.7 4.3L14 5.5L10.7 6.7L9.5 10L8.3 6.7L5 5.5L8.3 4.3L9.5 1Z"/><path d="M4 8.5L4.7 10.5L6.7 11.2L4.7 11.9L4 14L3.3 11.9L1.3 11.2L3.3 10.5L4 8.5Z"/></svg>`;
+  const ICON_ROCKET  = `<svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 2C8.5 2 5 6 4 9L9 14C12 13 16 9.5 16 5.5L12.5 2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="11.5" cy="6.5" r="1.2" fill="currentColor"/><path d="M4 9L2 11L4 13L7 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 16L4 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+  const ICON_SEARCH  = `<svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.5"/><line x1="11.5" y1="11.5" x2="15.5" y2="15.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  const ICON_SEARCH_BTN = `<svg viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M6 1C3.24 1 1 3.24 1 6C1 8.76 3.24 11 6 11C7.13 11 8.17 10.62 9 10L12.3 13.3L13.3 12.3L10 9C10.62 8.17 11 7.13 11 6C11 3.24 8.76 1 6 1ZM6 2.5C7.93 2.5 9.5 4.07 9.5 6C9.5 7.93 7.93 9.5 6 9.5C4.07 9.5 2.5 7.93 2.5 6C2.5 4.07 4.07 2.5 6 2.5Z"/></svg>`;
+  const ICON_PERSON  = `<svg viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="6" r="3"/><path d="M3 16C3 12.5 5.5 10 9 10C12.5 10 15 12.5 15 16V17H3V16Z"/></svg>`;
+  const ICON_INFO    = `<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.5V8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="6" cy="3.5" r="0.7" fill="currentColor"/></svg>`;
+  const ICON_MINUS   = `<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="6" x2="9" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  const ICON_PLUS    = `<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="6" x2="9" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="6" y1="3" x2="6" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+  const JOB_POSTINGS = [
+    { id:1, title:'Senior Product Designer', company:'Notion', companyInitial:'N',
+      postedDaysAgo:2, applicants:'Over 100 people clicked apply',
+      location:'San Francisco, CA', mode:'Full-time', salary:'$150k - $200k',
+      isNew:true, matchPercent:75, dismissed:false,
+      tags:['Design Systems','Figma','Leadership'],
+      description:`Notion is the collaborative AI workspace where teams and agents think together. We're building one place where your knowledge, projects, meetings, and AI tools live side by side, so work feels faster, clearer, and less fragmented. Millions of individuals, small teams, and large companies run their work on Notion.\n\nNotinos (our employees) are customer zero in bringing this future of work to life. We care about craft, humanity, and building things that last — not just shipping the next feature, but setting a standard for how modern teams (with humans and agents working together) think and execute.\n\nThis role sits on the web design team, part of the Creative Team at Notion. Our work exists to inform and inspire Notion users, both current and future. We tell the story of our offering in a way that reflects the products themselves: smart, refined, and with a dash of wit on the side.\n\nAs an Interaction Designer, you'll operate on high-impact web initiatives: setting direction from early strategy through final execution, partnering closely with stakeholders and executives, and raising the bar for craft and systems. You'll be asked to define approaches, create clarity, and influence both project outcomes and how the team works.` },
+    { id:2, title:'Senior Product Designer', company:'Notion', companyInitial:'N',
+      postedDaysAgo:2, applicants:'85 people clicked apply',
+      location:'San Francisco, CA', mode:'Full-time', salary:'$150k - $200k',
+      isNew:true, matchPercent:75, dismissed:false,
+      tags:['Design Systems','Figma','Leadership'],
+      description:`A second Notion role on the marketing surface. Partner with brand, product, and content teams to drive launches and creative campaigns.` },
+    { id:3, title:'Senior Product Designer', company:'Notion', companyInitial:'N',
+      postedDaysAgo:2, applicants:'62 people clicked apply',
+      location:'San Francisco, CA', mode:'Full-time', salary:'$150k - $200k',
+      isNew:true, matchPercent:75, dismissed:false,
+      tags:['Design Systems','Figma','Leadership'],
+      description:`Help craft Notion's internal tools surface — empowering go-to-market teams to move faster.` },
+    { id:4, title:'Senior Product Designer', company:'Linear', companyInitial:'L',
+      postedDaysAgo:7, applicants:'62 people clicked apply',
+      location:'San Francisco, CA', mode:'On-site', salary:'$130k - $165k',
+      isNew:false, matchPercent:68, dismissed:false,
+      tags:['B2B','SaaS','Figma'],
+      description:`Linear is the issue tracking and project management tool for high-performance teams. Our design team partners closely with engineering and product to ship a tool teams love using every day.` },
+  ];
+  const RECOMMENDED_JOBS = [
+    { id:5, title:'Senior Product Designer', company:'Notion', companyInitial:'N',
+      postedDaysAgo:2, applicants:'40 people clicked apply',
+      location:'San Francisco, CA', mode:'Full-time', salary:'$150k - $200k',
+      isNew:false, matchPercent:70, dismissed:true,    // start as dismissed (matches Figma)
+      tags:['Design Systems','Figma'],
+      description:`A previously dismissed recommendation — click the undo button to restore it.` },
+    { id:6, title:'Senior Product Designer', company:'Shopify', companyInitial:'S',
+      postedDaysAgo:4, applicants:'55 people clicked apply',
+      location:'Toronto, ON', mode:'Remote', salary:'$130k - $160k',
+      isNew:false, matchPercent:65, dismissed:false,
+      tags:['Commerce','Figma'],
+      description:`Shopify's design org partners closely with engineering and product to ship customer-loved experiences that scale.` },
+  ];
+  let selectedJobId = JOB_POSTINGS[0].id;
+  let findPeopleCounts = { 'Hiring Manager': 2, 'Recruiter': 2, 'Employee': 0 };
+  const CREDIT_COSTS = { 'Hiring Manager': 5, 'Recruiter': 3, 'Employee': 2 };
+
+  function renderJobTracker() {
+    renderJobList('recentJobs', JOB_POSTINGS);
+    renderJobList('recommendedJobs', RECOMMENDED_JOBS);
+    renderJobDetail(findJob(selectedJobId));
+  }
+  function findJob(id) {
+    return JOB_POSTINGS.find(j => j.id === id) || RECOMMENDED_JOBS.find(j => j.id === id) || JOB_POSTINGS[0];
+  }
+  const ICON_X = `<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  const ICON_UNDO = `<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7C3 9.21 4.79 11 7 11C9.21 11 11 9.21 11 7C11 4.79 9.21 3 7 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M3 4.5V7H5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  function renderJobList(containerId, jobs) {
+    const root = document.getElementById(containerId);
+    root.innerHTML = '';
+    jobs.forEach(job => {
+      const card = document.createElement('div');
+      // Dismissed state: show grayed-out card with undo button
+      if (job.dismissed) {
+        card.className = 'job-card dismissed';
+        card.innerHTML =
+          `<div class="job-card-row">` +
+            `<div class="job-logo"></div>` +
+            `<div class="job-meta">` +
+              `<div class="job-title">${job.title}</div>` +
+              `<div class="job-company">${job.company}</div>` +
+              `<div class="job-card-dismissed-msg">We won't show you this job again.</div>` +
+            `</div>` +
+          `</div>` +
+          `<button class="job-card-undo" aria-label="Undo dismiss">${ICON_UNDO}</button>`;
+        card.querySelector('.job-card-undo').addEventListener('click', (e) => {
+          e.stopPropagation();
+          job.dismissed = false;
+          renderJobTracker();
+        });
+        root.appendChild(card);
+        return;
+      }
+      card.className = 'job-card' + (job.id === selectedJobId ? ' selected' : '');
+      card.onclick = () => { selectedJobId = job.id; renderJobTracker(); };
+      const pillsHtml =
+        (job.isNew ? `<span class="job-pill-new">New!</span>` : '') +
+        (job.matchPercent ? `<span class="job-pill-match">${job.matchPercent}% Match ${ICON_INFO}</span>` : '');
+      card.innerHTML =
+        `<button class="job-card-dismiss" aria-label="Dismiss">${ICON_X}</button>` +
+        `<div class="job-card-row">` +
+          `<div class="job-logo"></div>` +
+          `<div class="job-meta">` +
+            `<div class="job-title">${job.title}</div>` +
+            `<div class="job-company">${job.company} • ${job.postedDaysAgo} day${job.postedDaysAgo===1?'':'s'} ago</div>` +
+          `</div>` +
+        `</div>` +
+        `<div class="job-card-meta-row">` +
+          `<span class="job-meta-item">${ICON_PIN}${job.location}</span>` +
+          `<span class="job-meta-item">${ICON_CLOCK}${job.mode}</span>` +
+          `<span class="job-meta-item blue">${ICON_DOLLAR}${job.salary}</span>` +
+        `</div>` +
+        `<div class="job-card-pills">${pillsHtml}</div>` +
+        `<div class="job-tags">${job.tags.map(t => `<span class="job-tag">${t}</span>`).join('')}</div>`;
+      card.querySelector('.job-card-dismiss').addEventListener('click', (e) => {
+        e.stopPropagation();
+        job.dismissed = true;
+        // If the dismissed card was the selected one, pick the next non-dismissed job
+        if (job.id === selectedJobId) {
+          const nextJob = [...JOB_POSTINGS, ...RECOMMENDED_JOBS].find(j => !j.dismissed);
+          if (nextJob) selectedJobId = nextJob.id;
+        }
+        renderJobTracker();
+      });
+      root.appendChild(card);
+    });
+  }
+
+  function peopleRow(name, icon, isPremium) {
+    const count = findPeopleCounts[name];
+    return (
+      `<div class="people-type-row">` +
+        `<div class="people-type-icon">${icon}</div>` +
+        `<div class="people-type-info">` +
+          `<div class="people-type-title-row">` +
+            `<span class="people-type-title">${name}</span>` +
+            `<span class="people-type-info-icon">${ICON_INFO}</span>` +
+            (isPremium ? `<span class="premium-pill">Premium</span>` : '') +
+          `</div>` +
+          `<div class="people-type-credits">${CREDIT_COSTS[name]} credits each</div>` +
+        `</div>` +
+        `<div class="counter">` +
+          `<button class="counter-btn" onclick="adjustPeople('${name}', -1)" aria-label="Decrease">${ICON_MINUS}</button>` +
+          `<span class="counter-value">${count}</span>` +
+          `<button class="counter-btn" onclick="adjustPeople('${name}', 1)" aria-label="Increase">${ICON_PLUS}</button>` +
+        `</div>` +
+      `</div>`
+    );
+  }
+  function adjustPeople(name, delta) {
+    findPeopleCounts[name] = Math.max(0, findPeopleCounts[name] + delta);
+    renderJobDetail(findJob(selectedJobId));
+  }
+
+  function renderJobDetail(job) {
+    if (!job) return;
+    const root = document.getElementById('jobDetail');
+    const totalPeople = Object.values(findPeopleCounts).reduce((a,b)=>a+b, 0);
+    const totalCredits = Object.entries(findPeopleCounts).reduce((sum, [k,v]) => sum + v * CREDIT_COSTS[k], 0);
+    root.innerHTML =
+      `<div class="job-banner"></div>` +
+      `<div class="job-detail-content">` +
+        `<div class="job-card-header">` +
+          `<div class="job-card-logo-detail">${job.companyInitial || job.company[0]}</div>` +
+          `<div class="job-card-text-detail">` +
+            `<div class="job-card-title-detail">${job.title}</div>` +
+            `<div class="job-card-subtitle-detail">${job.company} • ${job.postedDaysAgo} day${job.postedDaysAgo===1?'':'s'} ago • ${job.applicants}</div>` +
+          `</div>` +
+        `</div>` +
+        `<div class="job-meta-row">` +
+          `<span class="job-meta-item">${ICON_PIN}${job.location}</span>` +
+          `<span class="job-meta-item">${ICON_CLOCK}${job.mode}</span>` +
+          `<span class="job-meta-item blue">${ICON_DOLLAR}${job.salary}</span>` +
+        `</div>` +
+        `<div class="job-actions">` +
+          `<button class="job-btn secondary">${ICON_BOOKMARK}Save</button>` +
+          `<button class="job-btn secondary">${ICON_SHARE}Share</button>` +
+          `<button class="job-btn dark">Apply</button>` +
+        `</div>` +
+
+        `<hr class="job-divider"/>` +
+        `<div class="job-section">` +
+          `<h3>At a Glance</h3>` +
+          `<div class="glance-items">` +
+            `<div class="glance-item">${ICON_PIN}${job.location}</div>` +
+            `<div class="glance-item">${ICON_CLOCK}${job.mode}</div>` +
+            `<div class="glance-item blue">${ICON_DOLLAR}${job.salary}</div>` +
+          `</div>` +
+        `</div>` +
+
+        `<hr class="job-divider"/>` +
+        `<div class="job-section">` +
+          `<h3>Job Description</h3>` +
+          `<div class="job-description">${job.description}</div>` +
+        `</div>` +
+
+        `<hr class="job-divider"/>` +
+        `<div class="job-section">` +
+          `<div class="find-people-block">` +
+            `<h3>Find People</h3>` +
+            `<p class="find-people-subtitle">Who do you want to reach?</p>` +
+          `</div>` +
+          `<div class="suggested-mix">` +
+            `<div class="suggested-mix-title">${ICON_SPARKLE}Suggested Mix</div>` +
+            `<div class="suggested-mix-subtext">Based on response rates for Senior Design roles</div>` +
+          `</div>` +
+          `<div class="people-types">` +
+            peopleRow('Hiring Manager', ICON_ROCKET, true) +
+            peopleRow('Recruiter',      ICON_SEARCH, false) +
+            peopleRow('Employee',       ICON_PERSON, false) +
+          `</div>` +
+          `<hr class="job-divider" style="margin: 8px 0;"/>` +
+          `<p class="people-summary">${totalPeople} people • ${totalCredits} credits</p>` +
+          `<button class="find-people-btn">${ICON_SEARCH_BTN}Find People</button>` +
+        `</div>` +
+      `</div>`;
+  }
+
+  /* ── Init ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.dataset.view = 'default';
+    document.body.dataset.tracker = 'network';
+    // Spreadsheet view starts hidden
+    document.querySelector('.spreadsheet-view').hidden = true;
+    document.getElementById('filterBadge').classList.add('empty');
+    selectFirst();
+    renderList();
+    // Pre-render Job Tracker so it's ready when switched to
+    renderJobTracker();
+    const ds = document.querySelector('.detail-scroll');
+    const lc = document.querySelector('.list-col-inner');
+    if (ds) ds.scrollTop = 0;
+    if (lc) lc.scrollTop = 0;
+  });
+</script>
+</body>
+</html>
