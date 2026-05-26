@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offerloop — Job Board</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; margin: 0; background: #fff; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+    @keyframes toastIn  { from { transform: translateX(calc(100% + 24px)); opacity:0; } to { transform: translateX(0); opacity:1; } }
+    @keyframes toastOut { from { transform: translateX(0); opacity:1; } to   { transform: translateX(calc(100% + 24px)); opacity:0; } }
+    .toast-in  { animation: toastIn  0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .toast-out { animation: toastOut 0.2s  ease forwards; }
+  </style>
+</head>
+<body>
+
+<div style="display:flex; width:100vw; height:100vh; overflow:hidden; background:#fff;">
+
+  <!-- SIDEBAR (256px, #0f172a) -->
+  <aside style="width:256px; display:flex; flex-direction:column; background:#0f172a; flex-shrink:0; height:100vh; position:sticky; top:0; font-family:'Inter',sans-serif; border-right:0.5px solid rgba(255,255,255,0.06);">
+    <!-- Header -->
+    <div style="padding:12px 12px 4px; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:32px; height:32px; border-radius:50%; background:#4C62A8; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:white; flex-shrink:0;">JD</div>
+        <span style="font-size:14px; font-weight:500; color:white;">John Doe</span>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="#9CA3AF" stroke-width="1.16667" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <!-- Nav -->
+    <nav class="sidebar-scroll" style="flex:1; padding:8px 12px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+      <a href="#" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; text-decoration:none; color:white; font-size:13.5px;">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6.5 13C4.68333 13 3.146 12.3707 1.888 11.112C0.63 9.85333 0.000667196 8.316 5.29101e-07 6.5C-0.000666138 4.684 0.628667 3.14667 1.888 1.888C3.14733 0.629333 4.68467 0 6.5 0C8.31533 0 9.853 0.629333 11.113 1.888C12.373 3.14667 13.002 4.684 13 6.5C13 7.23333 12.8833 7.925 12.65 8.575C12.4167 9.225 12.1 9.8 11.7 10.3L17.3 15.9C17.4833 16.0833 17.575 16.3167 17.575 16.6C17.575 16.8833 17.4833 17.1167 17.3 17.3C17.1167 17.4833 16.8833 17.575 16.6 17.575C16.3167 17.575 16.0833 17.4833 15.9 17.3L10.3 11.7C9.8 12.1 9.225 12.4167 8.575 12.65C7.925 12.8833 7.23333 13 6.5 13ZM6.5 11C7.75 11 8.81267 10.5627 9.688 9.688C10.5633 8.81333 11.0007 7.75067 11 6.5C10.9993 5.24933 10.562 4.187 9.688 3.313C8.814 2.439 7.75133 2.00133 6.5 2C5.24867 1.99867 4.18633 2.43633 3.313 3.313C2.43967 4.18967 2.002 5.252 2 6.5C1.998 7.748 2.43567 8.81067 3.313 9.688C4.19033 10.5653 5.25267 11.0027 6.5 11Z" fill="white"/></svg>
+        Find
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; text-decoration:none; color:white; font-size:13.5px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.3327 2H3.99935C3.26602 2 2.66602 2.6 2.66602 3.33333V7.14C2.66602 9.69333 4.63268 11.9267 7.18602 12C9.82602 12.08 11.9993 9.96 11.9993 7.33333V6.66667H12.3327C13.6193 6.66667 14.666 5.62 14.666 4.33333C14.666 3.04667 13.6193 2 12.3327 2ZM10.666 3.33333V5.33333H3.99935V3.33333H10.666ZM12.3327 5.33333H11.9993V3.33333H12.3327C12.886 3.33333 13.3327 3.78 13.3327 4.33333C13.3327 4.88667 12.886 5.33333 12.3327 5.33333ZM3.33268 12.6667H12.666C13.0327 12.6667 13.3327 12.9667 13.3327 13.3333C13.3327 13.7 13.0327 14 12.666 14H3.33268C2.96602 14 2.66602 13.7 2.66602 13.3333C2.66602 12.9667 2.96602 12.6667 3.33268 12.6667Z" fill="white"/></svg>
+        Coffee Chat Prep
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; text-decoration:none; color:white; font-size:13.5px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.2133 3.78597C11.9733 4.02597 11.9533 4.3993 12.1666 4.66597C13.1333 5.8793 13.6399 7.5393 13.1866 9.2793C12.6599 11.3126 11.0666 12.8326 9.0466 13.2393C5.6466 13.9126 2.6666 11.286 2.6666 7.9993C2.6666 5.2793 4.69993 3.0393 7.33327 2.71264V4.0593C6.29716 4.23443 5.37159 4.81024 4.75658 5.66226C4.14158 6.51429 3.88654 7.5741 4.0466 8.61264C4.3066 10.3526 5.75327 11.7526 7.49993 11.966C8.26231 12.0616 9.03609 11.9356 9.72877 11.6031C10.4215 11.2706 11.0037 10.7457 11.4059 10.091C11.8081 9.43635 12.0133 8.6797 11.9969 7.91152C11.9804 7.14335 11.7431 6.39616 11.3133 5.7593C11.0866 5.42597 10.5999 5.40597 10.3133 5.68597L10.3066 5.69264C10.0799 5.9193 10.0599 6.27264 10.2333 6.5393C10.6333 7.15264 10.7933 7.9393 10.5599 8.75264C10.4271 9.20701 10.1754 9.6177 9.83089 9.94232C9.48634 10.2669 9.0614 10.4937 8.59993 10.5993C8.20889 10.6896 7.80251 10.6905 7.41109 10.6019C7.01966 10.5132 6.65329 10.3374 6.33928 10.0875C6.02527 9.83755 5.77172 9.51997 5.59753 9.15841C5.42334 8.79685 5.33301 8.40063 5.33327 7.9993C5.33327 6.7593 6.1866 5.72597 7.33327 5.42597V6.85264C6.93327 7.08597 6.6666 7.50597 6.6666 7.9993C6.6666 8.73264 7.2666 9.33264 7.99993 9.33264C8.73327 9.33264 9.33327 8.73264 9.33327 7.9993C9.33327 7.50597 9.0666 7.0793 8.6666 6.85264V1.80597C8.6666 1.54597 8.45327 1.33264 8.19327 1.33264C4.61993 1.1993 1.53993 4.0393 1.3466 7.5993C1.1066 11.966 4.95327 15.4793 9.35327 14.5326C11.9399 13.9793 13.9399 11.9993 14.5199 9.4193C14.9933 7.31264 14.3866 5.31264 13.2066 3.8393C13.1479 3.76598 13.0744 3.70589 12.9909 3.66296C12.9073 3.62003 12.8157 3.59523 12.7219 3.5902C12.6281 3.58516 12.5343 3.6 12.4467 3.63374C12.359 3.66748 12.2795 3.71935 12.2133 3.78597Z" fill="white"/></svg>
+        Tracker
+      </a>
+      <!-- Active: Job Board -->
+      <a href="#" style="display:flex; align-items:center; gap:10px; padding:11px 10px; border-radius:8px; text-decoration:none; color:#9ca8cd; font-size:13.5px; font-weight:500; background:rgba(123,143,201,0.2);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.9993 3.33268V1.99935C11.9993 1.26602 11.3993 0.666016 10.666 0.666016H7.99935C7.26602 0.666016 6.66602 1.26602 6.66602 1.99935V3.33268H4.66602C3.93268 3.33268 3.33268 3.93268 3.33268 4.66602V10.666C3.33268 11.3993 3.93268 11.9993 4.66602 11.9993H13.9993C14.7327 11.9993 15.3327 11.3993 15.3327 10.666V4.66602C15.3327 3.93268 14.7327 3.33268 13.9993 3.33268H11.9993ZM10.666 3.33268H7.99935V1.99935H10.666V3.33268ZM1.33268 5.99935C0.966016 5.99935 0.666016 6.29935 0.666016 6.66602V13.3327C0.666016 14.066 1.26602 14.666 1.99935 14.666H11.9993C12.366 14.666 12.666 14.366 12.666 13.9993C12.666 13.6327 12.366 13.3327 11.9993 13.3327H1.99935V6.66602C1.99935 6.29935 1.69935 5.99935 1.33268 5.99935Z" fill="#9ca8cd"/></svg>
+        Job Board
+      </a>
+    </nav>
+    <!-- Bottom -->
+    <div style="padding:12px 12px 12px; display:flex; flex-direction:column; gap:2px;">
+      <a href="#" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; text-decoration:none; color:white; font-size:13.5px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><g clip-path="url(#clip-pricing)"><path d="M8.39132 1.72465C8.14133 1.47459 7.80224 1.33406 7.44865 1.33398H2.66732C2.3137 1.33398 1.97456 1.47446 1.72451 1.72451C1.47446 1.97456 1.33398 2.3137 1.33398 2.66732V7.44865C1.33406 7.80224 1.47459 8.14133 1.72465 8.39132L7.52732 14.194C7.83033 14.4951 8.24015 14.6641 8.66732 14.6641C9.09449 14.6641 9.50431 14.4951 9.80732 14.194L14.194 9.80732C14.4951 9.50431 14.6641 9.09449 14.6641 8.66732C14.6641 8.24015 14.4951 7.83033 14.194 7.52732L8.39132 1.72465Z" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.99935 5.33268C5.18344 5.33268 5.33268 5.18344 5.33268 4.99935C5.33268 4.81525 5.18344 4.66602 4.99935 4.66602C4.81525 4.66602 4.66602 4.81525 4.66602 4.99935C4.66602 5.18344 4.81525 5.33268 4.99935 5.33268Z" fill="white" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></g><defs><clipPath id="clip-pricing"><rect width="16" height="16" fill="white"/></clipPath></defs></svg>
+        Pricing
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; text-decoration:none; color:white; font-size:13.5px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9.99935 1.33398H3.99935C3.64573 1.33398 3.30659 1.47446 3.05654 1.72451C2.80649 1.97456 2.66602 2.3137 2.66602 2.66732V13.334C2.66602 13.6876 2.80649 14.0267 3.05654 14.2768C3.30659 14.5268 3.64573 14.6673 3.99935 14.6673H11.9993C12.353 14.6673 12.6921 14.5268 12.9422 14.2768C13.1922 14.0267 13.3327 13.6876 13.3327 13.334V4.66732L9.99935 1.33398Z" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.33398 1.33398V4.00065C9.33398 4.35427 9.47446 4.69341 9.72451 4.94346C9.97456 5.19351 10.3137 5.33398 10.6673 5.33398H13.334" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.66732 6H5.33398" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6673 8.66602H5.33398" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6673 11.334H5.33398" stroke="white" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Documentation
+      </a>
+      <div style="padding:12px 4px 8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:11px; font-weight:600; color:#f3f3f6; letter-spacing:0.08em; text-transform:uppercase;">Credits</span>
+          <span style="font-size:12px; font-weight:600; color:#f3f3f6;">210 / 300</span>
+        </div>
+        <div style="width:100%; height:4px; background:rgba(123,143,201,0.25); border-radius:9999px; overflow:hidden;">
+          <div style="width:70%; height:100%; background:#4C62A8; border-radius:9999px;"></div>
+        </div>
+      </div>
+      <button style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; background:#4C62A8; color:white; border:none; border-radius:3px; font-size:13px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif; width:100%;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.66699 9.33377C2.54083 9.3342 2.41714 9.29882 2.31029 9.23175C2.20344 9.16468 2.11781 9.06867 2.06335 8.95487C2.0089 8.84107 1.98785 8.71416 2.00265 8.58887C2.01746 8.46359 2.06751 8.34507 2.14699 8.2471L8.74699 1.4471C8.7965 1.38996 8.86396 1.35134 8.93831 1.33759C9.01266 1.32384 9.08947 1.33578 9.15614 1.37144C9.22281 1.4071 9.27538 1.46437 9.30521 1.53384C9.33504 1.60331 9.34037 1.68087 9.32032 1.75377L8.04032 5.7671C8.00258 5.86812 7.9899 5.97678 8.00338 6.08377C8.01686 6.19076 8.05609 6.29289 8.11771 6.38139C8.17933 6.46988 8.2615 6.54211 8.35717 6.59187C8.45284 6.64164 8.55915 6.66745 8.66699 6.6671H13.3337C13.4598 6.66667 13.5835 6.70205 13.6904 6.76912C13.7972 6.83619 13.8828 6.9322 13.9373 7.046C13.9917 7.1598 14.0128 7.28671 13.998 7.412C13.9832 7.53728 13.9331 7.6558 13.8537 7.75377L7.25365 14.5538C7.20415 14.6109 7.13668 14.6495 7.06233 14.6633C6.98798 14.677 6.91117 14.6651 6.8445 14.6294C6.77783 14.5938 6.72526 14.5365 6.69543 14.467C6.6656 14.3976 6.66027 14.32 6.68032 14.2471L7.96032 10.2338C7.99806 10.1328 8.01074 10.0241 7.99726 9.9171C7.98378 9.81011 7.94455 9.70798 7.88293 9.61948C7.82131 9.53099 7.73914 9.45876 7.64347 9.40899C7.5478 9.35923 7.44149 9.33342 7.33365 9.33377H2.66699Z" fill="#FACC15" stroke="#FACC15" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Upgrade Plan
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main style="flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; background:#f5f6f8;">
+    <div id="app-root" style="display:contents;"></div>
+  </main>
+</div>
+
+
+<script type="text/babel">
+const { useState, useMemo, useRef, useEffect } = React;
+
+// ─── Icon Components ───────────────────────────────────────────────────────────
+const SearchIconBlue = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M11.625 10.5H11.0325L10.8225 10.2975C11.583 9.41555 12.0009 8.28953 12 7.125C12 6.16082 11.7141 5.21829 11.1784 4.4166C10.6427 3.61491 9.88137 2.99007 8.99058 2.62109C8.09979 2.25211 7.11959 2.15557 6.17394 2.34367C5.22828 2.53178 4.35964 2.99608 3.67786 3.67786C2.99608 4.35964 2.53178 5.22828 2.34367 6.17394C2.15557 7.11959 2.25211 8.09979 2.62109 8.99058C2.99007 9.88137 3.61491 10.6427 4.4166 11.1784C5.21829 11.7141 6.16082 12 7.125 12C8.3325 12 9.4425 11.5575 10.2975 10.8225L10.5 11.0325V11.625L14.25 15.3675L15.3675 14.25L11.625 10.5ZM7.125 10.5C5.2575 10.5 3.75 8.9925 3.75 7.125C3.75 5.2575 5.2575 3.75 7.125 3.75C8.9925 3.75 10.5 5.2575 10.5 7.125C10.5 8.9925 8.9925 10.5 7.125 10.5Z" fill="#4C62A8"/>
+  </svg>
+);
+const SearchIconWhite = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M10.3333 9.33334H9.80667L9.62 9.15334C10.296 8.36938 10.6675 7.36848 10.6667 6.33334C10.6667 5.47628 10.4125 4.63848 9.93637 3.92586C9.46022 3.21325 8.78344 2.65784 7.99163 2.32986C7.19982 2.00188 6.32853 1.91606 5.48794 2.08327C4.64736 2.25047 3.87523 2.66318 3.26921 3.26921C2.66318 3.87523 2.25047 4.64736 2.08327 5.48794C1.91606 6.32853 2.00188 7.19982 2.32986 7.99163C2.65784 8.78344 3.21325 9.46022 3.92586 9.93637C4.63848 10.4125 5.47628 10.6667 6.33334 10.6667C7.40667 10.6667 8.39334 10.2733 9.15334 9.62L9.33334 9.80667V10.3333L12.6667 13.66L13.66 12.6667L10.3333 9.33334ZM6.33334 9.33334C4.67334 9.33334 3.33334 7.99334 3.33334 6.33334C3.33334 4.67334 4.67334 3.33334 6.33334 3.33334C7.99334 3.33334 9.33334 4.67334 9.33334 6.33334C9.33334 7.99334 7.99334 9.33334 6.33334 9.33334Z" fill="#F3F3F6"/>
+  </svg>
+);
+const ClockIconSlate = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M6.83218 12.5257C9.97662 12.5257 12.5257 9.97662 12.5257 6.83218C12.5257 3.68774 9.97662 1.13867 6.83218 1.13867C3.68774 1.13867 1.13867 3.68774 1.13867 6.83218C1.13867 9.97662 3.68774 12.5257 6.83218 12.5257Z" stroke="#475569" strokeWidth="1.1387" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6.83203 3.41602V6.83212L9.10944 7.97083" stroke="#475569" strokeWidth="1.1387" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const ClockIconGray = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <g clipPath="url(#clip-clock-gray)">
+      <path d="M7.91243 14.5065C11.5542 14.5065 14.5065 11.5542 14.5065 7.91243C14.5065 4.27063 11.5542 1.31836 7.91243 1.31836C4.27063 1.31836 1.31836 4.27063 1.31836 7.91243C1.31836 11.5542 4.27063 14.5065 7.91243 14.5065Z" stroke="#64748B" strokeWidth="1.31881" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7.91211 3.95703V7.91347L10.5497 9.23229" stroke="#64748B" strokeWidth="1.31881" strokeLinecap="round" strokeLinejoin="round"/>
+    </g>
+    <defs><clipPath id="clip-clock-gray"><rect width="15.8258" height="15.8258" fill="white"/></clipPath></defs>
+  </svg>
+);
+const LocationIconSlate = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M11.387 5.69348C11.387 8.53625 8.23333 11.4969 7.17433 12.4113C7.07568 12.4854 6.95559 12.5256 6.83215 12.5256C6.70872 12.5256 6.58863 12.4854 6.48997 12.4113C5.43098 11.4969 2.27734 8.53625 2.27734 5.69348C2.27734 4.48547 2.75722 3.32694 3.61142 2.47274C4.46561 1.61855 5.62414 1.13867 6.83215 1.13867C8.04016 1.13867 9.1987 1.61855 10.0529 2.47274C10.9071 3.32694 11.387 4.48547 11.387 5.69348Z" stroke="#475569" strokeWidth="1.1387" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6.83305 7.40244C7.77639 7.40244 8.54111 6.63771 8.54111 5.69438C8.54111 4.75105 7.77639 3.98633 6.83305 3.98633C5.88972 3.98633 5.125 4.75105 5.125 5.69438C5.125 6.63771 5.88972 7.40244 6.83305 7.40244Z" stroke="#475569" strokeWidth="1.1387" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const LocationIconGray = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M13.1872 6.59362C13.1872 9.88603 9.53478 13.315 8.30828 14.374C8.19402 14.4599 8.05493 14.5063 7.91198 14.5063C7.76902 14.5063 7.62993 14.4599 7.51567 14.374C6.28917 13.315 2.63672 9.88603 2.63672 6.59362C2.63672 5.19453 3.1925 3.85275 4.18181 2.86345C5.17111 1.87414 6.51289 1.31836 7.91198 1.31836C9.31106 1.31836 10.6528 1.87414 11.6421 2.86345C12.6314 3.85275 13.1872 5.19453 13.1872 6.59362Z" stroke="#64748B" strokeWidth="1.31881" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7.91377 8.57168C9.00631 8.57168 9.89199 7.686 9.89199 6.59346C9.89199 5.50091 9.00631 4.61523 7.91377 4.61523C6.82123 4.61523 5.93555 5.50091 5.93555 6.59346C5.93555 7.686 6.82123 8.57168 7.91377 8.57168Z" stroke="#64748B" strokeWidth="1.31881" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const SalaryIconBlue = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <g clipPath="url(#clip-salary-blue)">
+      <path d="M7.91211 1.31836V14.5065" stroke="#4C62A8" strokeWidth="1.31881" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M11.2105 3.29688H6.26496C5.65286 3.29688 5.06583 3.54003 4.63301 3.97285C4.20019 4.40567 3.95703 4.9927 3.95703 5.6048C3.95703 6.2169 4.20019 6.80393 4.63301 7.23675C5.06583 7.66957 5.65286 7.91272 6.26496 7.91272H9.56199C10.1741 7.91272 10.7611 8.15588 11.1939 8.5887C11.6268 9.02152 11.8699 9.60855 11.8699 10.2206C11.8699 10.8327 11.6268 11.4198 11.1939 11.8526C10.7611 12.2854 10.1741 12.5286 9.56199 12.5286H3.95703" stroke="#4C62A8" strokeWidth="1.31881" strokeLinecap="round" strokeLinejoin="round"/>
+    </g>
+    <defs><clipPath id="clip-salary-blue"><rect width="15.8258" height="15.8258" fill="white"/></clipPath></defs>
+  </svg>
+);
+const SalaryIconSlate = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <g clipPath="url(#clip-salary-slate)">
+      <path d="M6.83203 1.13867V12.5257" stroke="#4C62A8" strokeWidth="1.1387" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9.67888 2.84766H5.40875C4.88024 2.84766 4.37338 3.0576 3.99967 3.43131C3.62596 3.80502 3.41602 4.31188 3.41602 4.84039C3.41602 5.36889 3.62596 5.87575 3.99967 6.24946C4.37338 6.62317 4.88024 6.83312 5.40875 6.83312H8.2555C8.78401 6.83312 9.29086 7.04306 9.66457 7.41677C10.0383 7.79048 10.2482 8.29734 10.2482 8.82584C10.2482 9.35435 10.0383 9.86121 9.66457 10.2349C9.29086 10.6086 8.78401 10.8186 8.2555 10.8186H3.41602" stroke="#4C62A8" strokeWidth="1.1387" strokeLinecap="round" strokeLinejoin="round"/>
+    </g>
+    <defs><clipPath id="clip-salary-slate"><rect width="13.6644" height="13.6644" fill="white"/></clipPath></defs>
+  </svg>
+);
+const AutoAwesomeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M12.9727 5.3338L13.4994 4.16714L14.666 3.64047C14.7242 3.61395 14.7736 3.57126 14.8082 3.51747C14.8428 3.46369 14.8612 3.40109 14.8612 3.33714C14.8612 3.27318 14.8428 3.21058 14.8082 3.1568C14.7736 3.10301 14.7242 3.06032 14.666 3.0338L13.4994 2.50714L12.9727 1.3338C12.9462 1.27561 12.9035 1.22627 12.8497 1.19167C12.7959 1.15707 12.7333 1.13867 12.6694 1.13867C12.6054 1.13867 12.5428 1.15707 12.489 1.19167C12.4353 1.22627 12.3926 1.27561 12.366 1.3338L11.8394 2.50047L10.666 3.02714C10.6078 3.05365 10.5585 3.09635 10.5239 3.15013C10.4893 3.20392 10.4709 3.26652 10.4709 3.33047C10.4709 3.39442 10.4893 3.45702 10.5239 3.51081C10.5585 3.56459 10.6078 3.60729 10.666 3.6338L11.8327 4.16047L12.3594 5.3338C12.4794 5.5938 12.8527 5.5938 12.9727 5.3338ZM7.66604 6.3338L6.60604 4.00047C6.37271 3.48047 5.62604 3.48047 5.39271 4.00047L4.33271 6.3338L1.99937 7.3938C1.47938 7.6338 1.47938 8.3738 1.99937 8.60714L4.33271 9.66714L5.39271 12.0005C5.63271 12.5205 6.37271 12.5205 6.60604 12.0005L7.66604 9.66714L9.99938 8.60714C10.5194 8.36714 10.5194 7.62714 9.99938 7.3938L7.66604 6.3338ZM12.3594 10.6671L11.8327 11.8338L10.666 12.3605C10.6078 12.387 10.5585 12.4297 10.5239 12.4835C10.4893 12.5372 10.4709 12.5999 10.4709 12.6638C10.4709 12.7278 10.4893 12.7904 10.5239 12.8441C10.5585 12.8979 10.6078 12.9406 10.666 12.9671L11.8327 13.4938L12.3594 14.6671C12.3859 14.7253 12.4286 14.7747 12.4824 14.8093C12.5362 14.8439 12.5988 14.8623 12.6627 14.8623C12.7267 14.8623 12.7893 14.8439 12.843 14.8093C12.8968 14.7747 12.9395 14.7253 12.966 14.6671L13.4927 13.5005L14.666 12.9738C14.7242 12.9473 14.7736 12.9046 14.8082 12.8508C14.8428 12.797 14.8612 12.7344 14.8612 12.6705C14.8612 12.6065 14.8428 12.5439 14.8082 12.4901C14.7736 12.4363 14.7242 12.3937 14.666 12.3671L13.4994 11.8405L12.9727 10.6671C12.9454 10.6089 12.902 10.5596 12.8477 10.525C12.7934 10.4905 12.7304 10.4722 12.666 10.4722C12.6017 10.4722 12.5387 10.4905 12.4843 10.525C12.43 10.5596 12.3867 10.6089 12.3594 10.6671Z" fill="#4C62A8"/>
+  </svg>
+);
+const RocketIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M6.89367 4.76281C5.36367 6.48031 4.31367 8.94781 4.21617 9.18031L2.52117 8.45281C2.03367 8.24281 1.91367 7.60531 2.28867 7.23031L4.54617 4.97281C4.89867 4.62031 5.40867 4.46281 5.90367 4.56031L6.89367 4.76281ZM8.01117 12.3828C8.23617 12.6078 8.56617 12.6678 8.85117 12.5328C9.72117 12.1278 11.5887 11.1753 12.7962 9.96781C16.2387 6.52531 16.2687 3.72031 16.0662 2.52031C16.0395 2.37295 15.9685 2.23725 15.8626 2.13136C15.7567 2.02547 15.621 1.95445 15.4737 1.92781C14.2737 1.72531 11.4687 1.75531 8.02617 5.19781C6.81867 6.40531 5.87367 8.27281 5.46117 9.14281C5.32617 9.42781 5.39367 9.76531 5.61117 9.98281L8.01117 12.3828ZM13.2387 11.1078C11.5212 12.6378 9.05367 13.6878 8.82117 13.7853L9.54867 15.4803C9.75867 15.9678 10.3962 16.0878 10.7712 15.7128L13.0287 13.4553C13.3812 13.1028 13.5387 12.5928 13.4412 12.0978L13.2387 11.1078ZM6.70617 13.0578C6.7789 13.421 6.76082 13.7966 6.65353 14.1512C6.54625 14.5057 6.35308 14.8283 6.09117 15.0903C5.51367 15.6678 3.72117 16.0953 2.55867 16.3203C2.04117 16.4178 1.58367 15.9603 1.68117 15.4428C1.90617 14.2803 2.32617 12.4878 2.91117 11.9103C3.17315 11.6484 3.49574 11.4552 3.85031 11.3479C4.20487 11.2407 4.58044 11.2226 4.94367 11.2953C5.82117 11.4603 6.54117 12.1803 6.70617 13.0578ZM9.75117 6.75031C9.75117 5.92531 10.4262 5.25031 11.2512 5.25031C12.0762 5.25031 12.7512 5.92531 12.7512 6.75031C12.7512 7.57531 12.0762 8.25031 11.2512 8.25031C10.4262 8.25031 9.75117 7.57531 9.75117 6.75031Z" fill="#4C62A8"/>
+  </svg>
+);
+const PersonIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M9 9C10.6575 9 12 7.6575 12 6C12 4.3425 10.6575 3 9 3C7.3425 3 6 4.3425 6 6C6 7.6575 7.3425 9 9 9ZM9 10.5C6.9975 10.5 3 11.505 3 13.5V14.25C3 14.6625 3.3375 15 3.75 15H14.25C14.6625 15 15 14.6625 15 14.25V13.5C15 11.505 11.0025 10.5 9 10.5Z" fill="#4C62A8"/>
+  </svg>
+);
+const InfoIconGreen = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M6 5.5V8M6 10.5C5.40905 10.5 4.82389 10.3836 4.27792 10.1575C3.73196 9.93131 3.23588 9.59984 2.81802 9.18198C2.40016 8.76412 2.06869 8.26804 1.84254 7.72208C1.6164 7.17611 1.5 6.59095 1.5 6C1.5 5.40905 1.6164 4.82389 1.84254 4.27792C2.06869 3.73196 2.40016 3.23588 2.81802 2.81802C3.23588 2.40016 3.73196 2.06869 4.27792 1.84254C4.82389 1.6164 5.40905 1.5 6 1.5C7.19347 1.5 8.33807 1.97411 9.18198 2.81802C10.0259 3.66193 10.5 4.80653 10.5 6C10.5 7.19347 10.0259 8.33807 9.18198 9.18198C8.33807 10.0259 7.19347 10.5 6 10.5ZM6.025 4V4.05H5.975V4H6.025Z" stroke="#1A6B2E" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const InfoIconGray = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M5.5 3.5H6.5V4.5H5.5V3.5ZM5.5 5.5H6.5V8.5H5.5V5.5ZM6 1C3.24 1 1 3.24 1 6C1 8.76 3.24 11 6 11C8.76 11 11 8.76 11 6C11 3.24 8.76 1 6 1ZM6 10C3.795 10 2 8.205 2 6C2 3.795 3.795 2 6 2C8.205 2 10 3.795 10 6C10 8.205 8.205 10 6 10Z" fill="#D1D4D9"/>
+  </svg>
+);
+const BookmarkIcon = ({ filled, color }) => filled ? (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M12.6673 14L8.00065 11.3333L3.33398 14V3.33333C3.33398 2.97971 3.47446 2.64057 3.72451 2.39052C3.97456 2.14048 4.3137 2 4.66732 2H11.334C11.6876 2 12.0267 2.14048 12.2768 2.39052C12.5268 2.64057 12.6673 2.97971 12.6673 3.33333V14Z" fill={color||'#3B82F6'} stroke={color||'#3B82F6'} strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+) : (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M4.66699 2.5H11.334C11.7911 2.5 12.1668 2.87596 12.167 3.33301V13.2412L8.19727 11.54L8.00098 11.4561L7.80371 11.54L3.83398 13.2412V3.33301C3.83415 2.90439 4.16487 2.54669 4.58301 2.50391L4.66699 2.5ZM5.33398 2.83301C4.69118 2.83301 4.16699 3.35719 4.16699 4V12.7637L4.86719 12.458L8 11.0918L11.1338 12.458L11.834 12.7637V4C11.834 3.35719 11.3098 2.83301 10.667 2.83301H5.33398Z" fill={color||'#374151'} stroke={color||'#374151'} strokeWidth="0.3"/>
+  </svg>
+);
+const ShareIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M12 1.83398C12.8305 1.83398 13.5 2.50346 13.5 3.33398C13.5 4.16451 12.8305 4.83398 12 4.83398C11.6086 4.83398 11.2542 4.68108 10.9795 4.42676L10.708 4.17578L10.3877 4.3623L5.68848 7.10156L5.37402 7.28516L5.45117 7.64062C5.48208 7.78285 5.5 7.89497 5.5 8.00098C5.49996 8.10698 5.4821 8.21907 5.45117 8.36133L5.37402 8.7168L5.68848 8.89941L10.4414 11.666L10.7578 11.8496L11.0283 11.6045C11.2926 11.3656 11.6295 11.2207 12 11.2207C12.7971 11.2207 13.4461 11.87 13.4463 12.667C13.4463 13.4642 12.7972 14.1143 12 14.1143C11.2028 14.1143 10.5537 13.4642 10.5537 12.667C10.5537 12.5652 10.5671 12.4576 10.5928 12.3496L10.6787 11.9893L10.3594 11.8027L5.6123 9.0293L5.29199 8.8418L5.02051 9.09375C4.74584 9.34808 4.39136 9.50098 4 9.50098C3.16958 9.50098 2.50017 8.83135 2.5 8.00098C2.5 7.17045 3.16948 6.50098 4 6.50098C4.39134 6.50098 4.74584 6.65292 5.02051 6.90723L5.29199 7.15918L5.6123 6.97266L10.3115 4.23242L10.626 4.0498L10.5488 3.69434C10.5179 3.55196 10.5 3.44007 10.5 3.33398C10.5 2.50346 11.1695 1.83398 12 1.83398ZM12 11.5137C11.3572 11.5137 10.833 12.0379 10.833 12.6807C10.833 13.3235 11.3572 13.8477 12 13.8477C12.6428 13.8477 13.167 13.3235 13.167 12.6807C13.167 12.0379 12.6428 11.5137 12 11.5137ZM4 6.83398C3.35719 6.83398 2.83301 7.35817 2.83301 8.00098C2.83318 8.64364 3.3573 9.16699 4 9.16699C4.6427 9.16699 5.16682 8.64364 5.16699 8.00098C5.16699 7.35817 4.64281 6.83398 4 6.83398ZM12 2.16699C11.3572 2.16699 10.833 2.69118 10.833 3.33398C10.833 3.97679 11.3572 4.50098 12 4.50098C12.6428 4.50098 13.167 3.97679 13.167 3.33398C13.167 2.69118 12.6428 2.16699 12 2.16699Z" fill="#374151" stroke="#374151" strokeWidth="0.2"/>
+  </svg>
+);
+const LockIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <rect x="2" y="5.5" width="8" height="5.5" rx="1" stroke="#64748b" strokeWidth="1.2"/>
+    <path d="M4 5.5V4a2 2 0 014 0v1.5" stroke="#64748b" strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+const IconMail = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <rect x="1" y="3" width="11" height="7.5" rx="1.2" stroke="currentColor" strokeWidth="1.2"/>
+    <path d="M1.5 3.5l5 4 5-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+const IconExternalLink = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    <path d="M8 1h3m0 0v3m0-3L6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// ─── Find People Data ──────────────────────────────────────────────────────────
+const ROLES = [
+  { key: 'hiring-manager', label: 'Hiring Manager', credits: 5, premium: true  },
+  { key: 'recruiter',      label: 'Recruiter',      credits: 3, premium: false },
+  { key: 'employee',       label: 'Employee',       credits: 2, premium: false },
+];
+const PEOPLE_POOL = [
+  { id:1, name:'James Park',    type:'hiring-manager', title:'Head of Design',             company:'Notion', location:'San Francisco, CA', email:'james.park@notion.so',    linkedin:'#' },
+  { id:2, name:'Sarah Chen',    type:'recruiter',      title:'Senior Technical Recruiter', company:'Stripe', location:'San Francisco, CA', email:'sarah.chen@stripe.com',   linkedin:'#' },
+  { id:3, name:'Mike Torres',   type:'recruiter',      title:'Talent Acquisition Lead',    company:'Notion', location:'San Francisco, CA', email:'mike.torres@notion.so',   linkedin:'#' },
+  { id:4, name:'Rachel Nguyen', type:'employee',       title:'Product Designer',           company:'Notion', location:'San Francisco, CA', email:'rachel.nguyen@notion.so', linkedin:'#' },
+  { id:5, name:'David Kim',     type:'employee',       title:'Senior Designer',            company:'Notion', location:'San Francisco, CA', email:'david.kim@notion.so',     linkedin:'#' },
+];
+
+// ─── Person Card ───────────────────────────────────────────────────────────────
+function RoleBadge({ type }) {
+  const cfg = {
+    'hiring-manager': { bg:'#DBEAFE', color:'#1D4ED8', label:'Hiring Manager' },
+    'recruiter':      { bg:'#1F2937', color:'#fff',    label:'Recruiter'      },
+    'employee':       { bg:'#F3F4F6', color:'#374151', label:'Employee'       },
+  }[type] || { bg:'#F3F4F6', color:'#374151', label: type };
+  return (
+    <span style={{background:cfg.bg, color:cfg.color, borderRadius:9999, padding:'2px 8px', fontSize:11, fontWeight:500, display:'inline-block'}}>
+      {cfg.label}
+    </span>
+  );
+}
+function PersonCard({ person }) {
+  return (
+    <div style={{border:'1px solid #E5E7EB', borderRadius:10, padding:16, background:'#fff', display:'flex', flexDirection:'column', gap:10}}>
+      <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8}}>
+        <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+          <span style={{fontWeight:600, color:'#111827', fontSize:14}}>{person.name}</span>
+          <RoleBadge type={person.type} />
+        </div>
+        <a href={person.linkedin} style={{display:'flex', alignItems:'center', gap:4, fontSize:12, color:'#9CA3AF', textDecoration:'none', flexShrink:0}}>
+          LinkedIn <IconExternalLink />
+        </a>
+      </div>
+      <div style={{display:'flex', flexDirection:'column', gap:6, fontSize:12, color:'#6B7280'}}>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="4.5" width="11" height="7" rx="1.2" stroke="#D1D5DB" strokeWidth="1.2"/><path d="M4 4.5V3.5a2.5 2.5 0 015 0v1" stroke="#D1D5DB" strokeWidth="1.2" strokeLinecap="round"/></svg>
+          {person.title}
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="2" width="10" height="10" rx="1" stroke="#D1D5DB" strokeWidth="1.2"/><path d="M4.5 5.5h1M7.5 5.5h1M4.5 8h1M7.5 8h1" stroke="#D1D5DB" strokeWidth="1.2" strokeLinecap="round"/></svg>
+          {person.company}
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5C4.84 1.5 3.5 2.84 3.5 4.5c0 2.5 3 6.5 3 6.5s3-4 3-6.5c0-1.66-1.34-3-3-3z" stroke="#D1D5DB" strokeWidth="1.2"/><circle cx="6.5" cy="4.5" r="1.1" stroke="#D1D5DB" strokeWidth="1.1"/></svg>
+          {person.location}
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <span style={{color:'#D1D5DB', display:'flex'}}><IconMail /></span>
+          <a href={`mailto:${person.email}`} style={{color:'#4C62A8'}}>{person.email}</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── FindPeoplePanel ───────────────────────────────────────────────────────────
+function FindPeoplePanel({
+  userPlan       = 'free',
+  currentCredits = 210,
+  onUpgradeClick = () => {},
+  onCreditsSpent = () => {},
+}) {
+  const isPremium = userPlan === 'premium';
+  const defaultCounts = { 'hiring-manager': isPremium ? 1 : 0, 'recruiter': 2, 'employee': 2 };
+  const [phase, setPhase]                     = useState('configure');
+  const [counts, setCounts]                   = useState(defaultCounts);
+  const [confirmedCounts, setConfirmedCounts] = useState(null);
+  const [activeTab, setActiveTab]             = useState('all');
+  const loadTimer = useRef(null);
+  useEffect(() => () => clearTimeout(loadTimer.current), []);
+
+  const totalPeople  = ROLES.reduce((s,r) => s + counts[r.key], 0);
+  const totalCredits = ROLES.reduce((s,r) => s + r.credits * counts[r.key], 0);
+  const atMax        = totalPeople >= 10;
+  const freeHasHM    = !isPremium && counts['hiring-manager'] > 0;
+  const notEnough    = !freeHasHM && totalCredits > 0 && currentCredits < totalCredits;
+  const ctaDisabled  = totalPeople === 0 || notEnough;
+
+  function adjustCount(key, delta) {
+    setCounts(prev => {
+      const next = Math.max(0, Math.min(5, prev[key] + delta));
+      const newTotal = Object.entries(prev).reduce((s,[k,v]) => s + (k===key ? next : v), 0);
+      if (newTotal > 10) return prev;
+      return { ...prev, [key]: next };
+    });
+  }
+  function handleFind() {
+    if (freeHasHM) { onUpgradeClick(); return; }
+    const snap = { ...counts };
+    setConfirmedCounts(snap);
+    setPhase('loading');
+    onCreditsSpent(totalCredits);
+    loadTimer.current = setTimeout(() => { setPhase('results'); setActiveTab('all'); }, 1500);
+  }
+  function handleSearchAgain() {
+    clearTimeout(loadTimer.current);
+    setCounts(defaultCounts);
+    setConfirmedCounts(null);
+    setPhase('configure');
+  }
+  const resultPeople = useMemo(() => {
+    if (!confirmedCounts) return [];
+    return ROLES.flatMap(r => PEOPLE_POOL.filter(p => p.type === r.key).slice(0, confirmedCounts[r.key]));
+  }, [confirmedCounts]);
+  const resultTabs = useMemo(() => {
+    if (!confirmedCounts) return [];
+    const total = Object.values(confirmedCounts).reduce((a,b) => a+b, 0);
+    const tabs = [{ key:'all', label:`All (${total})` }];
+    const tabLabel = { 'hiring-manager':'Hiring Manager', recruiter:'Recruiters', employee:'Employees' };
+    ROLES.forEach(r => { if (confirmedCounts[r.key] > 0) tabs.push({ key:r.key, label:`${tabLabel[r.key]} (${confirmedCounts[r.key]})` }); });
+    return tabs;
+  }, [confirmedCounts]);
+  const shownPeople = activeTab === 'all' ? resultPeople : resultPeople.filter(p => p.type === activeTab);
+  const confirmedTotal   = confirmedCounts ? Object.values(confirmedCounts).reduce((a,b) => a+b, 0) : 0;
+  const confirmedCredits = confirmedCounts ? ROLES.reduce((s,r) => s + r.credits * confirmedCounts[r.key], 0) : 0;
+
+  // ── Phase: Configure ─────────────────────────────────────────────────────────
+  if (phase === 'configure') {
+    let ctaLabel = 'Find People';
+    if (freeHasHM)      ctaLabel = 'Upgrade to Find Hiring Managers';
+    else if (notEnough) ctaLabel = 'Not enough credits';
+
+    return (
+      <div style={{display:'flex', flexDirection:'column', gap:16, fontFamily:"'Inter',sans-serif"}}>
+        <div>
+          <h3 style={{fontSize:11, fontWeight:700, color:'#374151', margin:'0 0 8px', textTransform:'uppercase', letterSpacing:'0.08em'}}>FIND PEOPLE</h3>
+          <p style={{fontSize:13, color:'#6B7280', margin:0}}>Who do you want to reach?</p>
+        </div>
+        <div style={{display:'flex', flexDirection:'column', gap:2}}>
+          <div style={{display:'flex', alignItems:'center', gap:6}}>
+            <AutoAwesomeIcon />
+            <span style={{fontSize:13, fontWeight:500, color:'#4C62A8'}}>Suggested Mix</span>
+          </div>
+          <span style={{fontSize:12, color:'#9CA3AF'}}>Based on response rates for Senior Design roles</span>
+        </div>
+        <div style={{display:'flex', flexDirection:'column', gap:14}}>
+          {ROLES.map(role => {
+            const locked = role.premium && !isPremium;
+            const count  = counts[role.key];
+            const canInc = !locked && count < 5 && !atMax;
+            const canDec = !locked && count > 0;
+            const RoleIcon = role.key === 'hiring-manager' ? RocketIcon : role.key === 'recruiter' ? SearchIconBlue : PersonIcon;
+            return (
+              <div key={role.key} style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12}}>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+                    <RoleIcon />
+                    <span style={{fontSize:14, fontWeight:500, color:'#111827'}}>{role.label}</span>
+                    {role.premium && (
+                      <span style={{background:'#DBEAFE', color:'#1D4ED8', borderRadius:9999, padding:'2px 8px', fontSize:10, fontWeight:600}}>Premium</span>
+                    )}
+                    {!role.premium && <InfoIconGray />}
+                  </div>
+                  <div style={{fontSize:12, color:'#9CA3AF', marginTop:2, paddingLeft:26}}>{role.credits} credits each</div>
+                </div>
+                <div style={{display:'flex', alignItems:'center', gap:4, opacity: locked ? 0.4 : 1}}>
+                  <button onClick={() => canDec && adjustCount(role.key, -1)} disabled={!canDec || locked}
+                    style={{width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid #E5E7EB', borderRadius:6, background:'#fff', cursor: canDec&&!locked ? 'pointer' : 'not-allowed', color:'#374151', fontSize:16, fontFamily:'monospace', padding:0}}>
+                    {locked ? <LockIcon /> : '−'}
+                  </button>
+                  <span style={{width:28, textAlign:'center', fontSize:14, fontWeight:600, color:'#111827'}}>{count}</span>
+                  <button onClick={() => canInc && adjustCount(role.key, 1)} disabled={!canInc || locked}
+                    style={{width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid #E5E7EB', borderRadius:6, background:'#fff', cursor: canInc&&!locked ? 'pointer' : 'not-allowed', color:'#374151', fontSize:16, fontFamily:'monospace', padding:0}}>
+                    {locked ? <LockIcon /> : '+'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', paddingTop:10, borderTop:'1px solid #F1F5F9'}}>
+          <span style={{fontSize:13, color:'#374151', fontWeight:500}}>{totalPeople} {totalPeople===1?'person':'people'} · {totalCredits} credits</span>
+          {atMax && <span style={{fontSize:12, color:'#D97706', fontWeight:500}}>Max 10 people</span>}
+        </div>
+        {freeHasHM && <p style={{fontSize:12, color:'#6B7280', margin:0}}>Hiring managers require a Premium plan. <button onClick={onUpgradeClick} style={{background:'none',border:'none',color:'#4C62A8',cursor:'pointer',fontSize:12,fontWeight:500,padding:0,fontFamily:"'Inter',sans-serif"}}>Upgrade →</button></p>}
+        {notEnough && <p style={{fontSize:12, color:'#6B7280', margin:0}}>Not enough credits. <button style={{background:'none',border:'none',color:'#4C62A8',cursor:'pointer',fontSize:12,fontWeight:500,padding:0,fontFamily:"'Inter',sans-serif"}}>Buy more →</button></p>}
+        <button onClick={!ctaDisabled||freeHasHM ? handleFind : undefined} disabled={ctaDisabled&&!freeHasHM}
+          style={{display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'12px 0', background: ctaDisabled&&!freeHasHM ? 'rgba(17,24,39,0.4)' : '#111827', border:'none', borderRadius:8, fontSize:15, fontWeight:600, color:'#fff', cursor: ctaDisabled&&!freeHasHM ? 'not-allowed' : 'pointer', fontFamily:"'Inter',sans-serif", width:'100%'}}>
+          <SearchIconWhite />{ctaLabel}
+        </button>
+      </div>
+    );
+  }
+
+  // ── Phase: Loading ────────────────────────────────────────────────────────────
+  if (phase === 'loading') {
+    const summary = ROLES.filter(r => confirmedCounts[r.key] > 0)
+      .map(r => { const n = confirmedCounts[r.key]; const noun = r.key==='hiring-manager'?`hiring manager${n>1?'s':''}`:r.key==='recruiter'?`recruiter${n>1?'s':''}`: `employee${n>1?'s':''}`; return `${n} ${noun}`; }).join(', ');
+    return (
+      <div className="flex flex-col gap-4">
+        <h3 style={{fontSize:11, fontWeight:700, color:'#374151', margin:0, textTransform:'uppercase', letterSpacing:'0.08em'}}>FIND PEOPLE</h3>
+        <p className="text-sm text-gray-400 animate-pulse">Finding {summary}…</p>
+        <div className="flex flex-col gap-3">
+          {[0,1,2].map(i => (
+            <div key={i} className="border border-gray-100 rounded-xl p-4 animate-pulse">
+              <div className="flex items-center gap-2 mb-3"><div className="h-3 w-24 bg-gray-100 rounded-full"/><div className="h-3 w-16 bg-gray-100 rounded-full"/></div>
+              <div className="flex flex-col gap-2"><div className="h-2.5 w-full bg-gray-100 rounded-full"/><div className="h-2.5 w-3/4 bg-gray-100 rounded-full"/><div className="h-2.5 w-1/2 bg-gray-100 rounded-full"/></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Phase: Results ────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col gap-4">
+      <h3 style={{fontSize:11, fontWeight:700, color:'#374151', margin:0, textTransform:'uppercase', letterSpacing:'0.08em'}}>FIND PEOPLE</h3>
+      <p className="text-xs text-gray-400">{confirmedCredits} credits used · {confirmedTotal} people found</p>
+      <div className="flex items-end border-b border-gray-100 -mx-1 px-1 overflow-x-auto">
+        {resultTabs.map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            className={['flex items-center px-2.5 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 -mb-px transition-colors', activeTab===tab.key ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'].join(' ')}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-3">
+        {shownPeople.map(p => <PersonCard key={p.id} person={p} />)}
+      </div>
+      <div className="pt-1 text-center">
+        <button onClick={handleSearchAgain} className="text-xs text-blue-600 hover:underline">Search again</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Jobs Data ─────────────────────────────────────────────────────────────────
+const SAVED_SEARCHES = [
+  { id:1, name:'Remote Senior Design Roles', filters:['Remote','Senior','$100k+','Full-time'], saved:'2 days ago' },
+  { id:2, name:'NYC Product Design',         filters:['New York, NY','Full-time','Product Designer'], saved:'5 days ago' },
+  { id:3, name:'Startup Quick Apply',        filters:['Quick Apply','$80k+','Full-time','Startup'], saved:'1 week ago' },
+];
+const JOBS = [
+  { id:'stripe-spd',    section:'recent',      title:'Senior Product Designer', company:'Stripe', posted:'3 days ago', match:75, location:'San Francisco, CA', jobType:'Full-time', salary:'$150k – $200k', tags:['Design Systems','Figma','Leadership'],       logoBg:'#635bff', logoColor:'#fff', detailPosted:'1 day ago',  detailMatch:88, detailLocation:'San Francisco' },
+  { id:'notion-spd',    section:'recent',      title:'Senior Product Designer', company:'Notion', posted:'2 days ago', match:75, location:'New York, NY',       jobType:'Full-time', salary:'$130k – $170k', tags:['Prototyping','User Research','Figma'],       logoBg:'#000',    logoColor:'#fff', detailPosted:'2 days ago',  detailMatch:75, detailLocation:'New York, NY' },
+  { id:'linear-ux',     section:'recent',      title:'UX Designer II',          company:'Linear', posted:'5 days ago', match:62, location:'Remote',             jobType:'Full-time', salary:'$110k – $145k', tags:['Interaction Design','Accessibility'],        logoBg:'#5e6ad2', logoColor:'#fff', detailPosted:'5 days ago',  detailMatch:62, detailLocation:'Remote' },
+  { id:'notion-spd-rec',section:'recommended', title:'Senior Product Designer', company:'Notion', posted:'2 days ago', match:75, location:'San Francisco, CA', jobType:'Full-time', salary:'$150k – $200k', tags:['Design Systems','Figma','Leadership'],       logoBg:'#000',    logoColor:'#fff', detailPosted:'2 days ago',  detailMatch:75, detailLocation:'San Francisco, CA' },
+  { id:'figma-pd',      section:'recommended', title:'Principal Designer',      company:'Figma',  posted:'Today',      match:91, location:'Remote',             jobType:'Full-time', salary:'$180k – $240k', tags:['Design Systems','Figma','Cross-functional'], logoBg:'linear-gradient(135deg,#6366f1,#8b5cf6)', logoColor:'#fff', detailPosted:'Today', detailMatch:91, detailLocation:'Remote' },
+  { id:'loom-pd',       section:'recommended', title:'Product Designer',        company:'Loom',   posted:'4 days ago', match:58, location:'San Francisco, CA', jobType:'Full-time', salary:'$120k – $155k', tags:['Mobile Design','Video UX','Figma'],          logoBg:'#0f172a', logoColor:'#fff', detailPosted:'4 days ago',  detailMatch:58, detailLocation:'San Francisco, CA' },
+];
+function matchColors(pct) {
+  if (pct >= 70) return { bg:'#DCFCE7', border:'#28a745', color:'#16A34A' };
+  return { bg:'#fef9c3', border:'rgba(133,77,14,0.4)', color:'#854d0e' };
+}
+
+// ─── Filter Bar (2 states) ─────────────────────────────────────────────────────
+const ALL_FILTER_OPTIONS = ['Remote', 'Full-time', '$100k+', 'Quick Apply'];
+function FilterBar({ onSaveSearch, onMoreFilters }) {
+  const [activeFilters, setActiveFilters] = useState(['Remote','Full-time','$100k+','Quick Apply']);
+  const [showDropdown, setShowDropdown]   = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const removeFilter = f => setActiveFilters(prev => prev.filter(x => x !== f));
+  const addFilter    = f => { if (!activeFilters.includes(f)) setActiveFilters(prev => [...prev, f]); };
+  const clearAll     = () => setActiveFilters([]);
+  const hasFilters   = activeFilters.length > 0;
+  const available    = ALL_FILTER_OPTIONS.filter(f => !activeFilters.includes(f));
+
+  return (
+    <div style={{background:'#f5f6f8', borderBottom:'1px solid #E5E7EB', padding:'16px 24px', display:'flex', flexDirection:'column', gap:12, flexShrink:0, fontFamily:"'Inter',sans-serif"}}>
+      {/* Title + Ask Scout */}
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+        <div>
+          <h1 style={{fontSize:30, fontWeight:400, color:'#1e2d4d', margin:0, lineHeight:'36px', fontFamily:"'Libre Baskerville', serif"}}>Job Board</h1>
+          <p style={{fontSize:14, color:'#6B7280', margin:'2px 0 0', letterSpacing:'1.12px'}}>100 new jobs • 100 currently saved jobs</p>
+        </div>
+        <button style={{display:'flex', alignItems:'center', gap:7, padding:'8px 16px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:9999, fontSize:14, color:'#374151', cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>
+          <AutoAwesomeIcon />
+          Ask Scout
+        </button>
+      </div>
+      {/* Search + actions */}
+      <div style={{display:'flex', alignItems:'center', gap:10}}>
+        <div style={{position:'relative', flex:1, maxWidth:480}}>
+          <div style={{position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', pointerEvents:'none', display:'flex', alignItems:'center'}}>
+            <SearchIconBlue />
+          </div>
+          <input type="text" placeholder="Search by Name, Company or Title..."
+            style={{width:'100%', height:38, background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:8, padding:'0 12px 0 44px', fontSize:14, color:'#111827', fontFamily:"'Inter',sans-serif", outline:'none', boxSizing:'border-box'}} />
+        </div>
+        <button onClick={onSaveSearch} style={{display:'flex', alignItems:'center', gap:6, height:38, padding:'0 14px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, color:'#374151', cursor:'pointer', fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap'}}>
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 2h9a1 1 0 011 1v9.5l-5-2.75L3 12.5V3a1 1 0 011-1z" stroke="#374151" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+          Save Search
+        </button>
+        <button onClick={onMoreFilters} style={{display:'flex', alignItems:'center', gap:6, height:38, padding:'0 14px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, color:'#374151', cursor:'pointer', fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap'}}>
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 4h11M2 7.5h11M2 11h11" stroke="#374151" strokeWidth="1.3" strokeLinecap="round"/><circle cx="5" cy="4" r="1.5" fill="white" stroke="#374151" strokeWidth="1.2"/><circle cx="10" cy="7.5" r="1.5" fill="white" stroke="#374151" strokeWidth="1.2"/><circle cx="6" cy="11" r="1.5" fill="white" stroke="#374151" strokeWidth="1.2"/></svg>
+          More Filters
+        </button>
+      </div>
+      {/* Filter state */}
+      <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+        <span style={{fontSize:13, color:'#6B7280', whiteSpace:'nowrap'}}>Active filters:</span>
+        {hasFilters ? (
+          <>
+            {activeFilters.map(f => (
+              <div key={f} style={{display:'inline-flex', alignItems:'center', gap:5, height:28, padding:'0 10px', background:'rgba(76,98,168,0.08)', border:'1px solid rgba(76,98,168,0.25)', borderRadius:9999, fontSize:13, color:'#4C62A8', fontWeight:500}}>
+                {f}
+                <button onClick={() => removeFilter(f)} style={{background:'none', border:'none', cursor:'pointer', padding:0, lineHeight:1, display:'flex', alignItems:'center', color:'#4C62A8', marginLeft:2}}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="#4C62A8" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            ))}
+            {available.length > 0 && (
+              <div style={{position:'relative'}} ref={dropdownRef}>
+                <button onClick={() => setShowDropdown(v => !v)}
+                  style={{display:'inline-flex', alignItems:'center', gap:5, height:28, padding:'0 10px', background:'#fff', border:'1px solid #4C62A8', borderRadius:9999, fontSize:13, color:'#4C62A8', fontWeight:500, cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="#4C62A8" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  Add Filter
+                </button>
+                {showDropdown && (
+                  <div style={{position:'absolute', top:'calc(100% + 6px)', left:0, background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, boxShadow:'0 4px 16px rgba(0,0,0,0.12)', zIndex:200, minWidth:160, padding:'6px 0', fontFamily:"'Inter',sans-serif"}}>
+                    {available.map(f => (
+                      <button key={f} onClick={() => { addFilter(f); setShowDropdown(false); }}
+                        style={{width:'100%', display:'flex', padding:'8px 14px', background:'none', border:'none', fontSize:13, color:'#374151', cursor:'pointer', textAlign:'left', fontFamily:"'Inter',sans-serif"}}
+                        onMouseEnter={e => e.currentTarget.style.background='#F9FAFB'}
+                        onMouseLeave={e => e.currentTarget.style.background='none'}>
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <button onClick={clearAll} style={{background:'none', border:'none', fontSize:13, fontWeight:500, color:'#9CA3AF', cursor:'pointer', fontFamily:"'Inter',sans-serif", padding:'0 4px'}}>Clear all</button>
+          </>
+        ) : (
+          <div style={{position:'relative'}} ref={dropdownRef}>
+            <button onClick={() => setShowDropdown(v => !v)}
+              style={{display:'inline-flex', alignItems:'center', gap:6, height:30, padding:'7px 13px', background:'rgba(123,143,201,0.1)', border:'1px solid rgba(123,143,201,0.3)', borderRadius:10, fontSize:13, color:'#4c62a8', fontWeight:500, cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#4C62A8" strokeWidth="1.6" strokeLinecap="round"/></svg>
+              Add Filter +
+            </button>
+            {showDropdown && (
+              <div style={{position:'absolute', top:'calc(100% + 6px)', left:0, background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, boxShadow:'0 4px 16px rgba(0,0,0,0.12)', zIndex:200, minWidth:160, padding:'6px 0', fontFamily:"'Inter',sans-serif"}}>
+                {ALL_FILTER_OPTIONS.map(f => (
+                  <button key={f} onClick={() => { addFilter(f); setShowDropdown(false); }}
+                    style={{width:'100%', display:'flex', padding:'8px 14px', background:'none', border:'none', fontSize:13, color:'#374151', cursor:'pointer', textAlign:'left', fontFamily:"'Inter',sans-serif"}}
+                    onMouseEnter={e => e.currentTarget.style.background='#F9FAFB'}
+                    onMouseLeave={e => e.currentTarget.style.background='none'}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Save Search Modal ─────────────────────────────────────────────────────────
+function SaveSearchModal({ onClose }) {
+  const [name, setName]       = useState('');
+  const [saved, setSaved]     = useState(false);
+  const [searches, setSearches] = useState(SAVED_SEARCHES);
+
+  function handleSave() {
+    if (!name.trim()) return;
+    setSearches(prev => [{ id:Date.now(), name:name.trim(), filters:['Remote','Full-time','$100k+','Quick Apply'], saved:'Just now' }, ...prev]);
+    setSaved(true);
+    setTimeout(onClose, 1400);
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.3)', zIndex:1000}} />
+      <div style={{position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', background:'#fff', borderRadius:16, width:460, maxHeight:'80vh', zIndex:1001, boxShadow:'0 20px 60px rgba(0,0,0,0.15)', fontFamily:"'Inter',sans-serif", display:'flex', flexDirection:'column', overflow:'hidden'}}>
+        <div style={{padding:'22px 24px 16px', borderBottom:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0}}>
+          <div>
+            <h2 style={{margin:'0 0 2px', fontSize:17, fontWeight:600, color:'#111827'}}>Saved Searches</h2>
+            <p style={{margin:0, fontSize:12, color:'#94a3b8'}}>{searches.length} saved search{searches.length!==1?'es':''}</p>
+          </div>
+          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'#94a3b8', padding:4, display:'flex'}}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+        <div style={{padding:'16px 24px', borderBottom:'1px solid #f1f5f9', flexShrink:0}}>
+          {saved ? (
+            <div style={{display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10}}>
+              <div style={{width:24, height:24, background:'#dcfce7', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 6.5l3 3L10.5 3.5" stroke="#1a6b2e" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              <span style={{fontSize:14, fontWeight:500, color:'#1a6b2e'}}>"{name}" saved!</span>
+            </div>
+          ) : (
+            <div style={{display:'flex', gap:8}}>
+              <input autoFocus type="text" placeholder="Name this search… e.g. Remote Senior Roles"
+                value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key==='Enter'&&handleSave()}
+                style={{flex:1, height:38, border:'1.5px solid #E5E7EB', borderRadius:8, padding:'0 12px', fontSize:13, fontFamily:"'Inter',sans-serif", outline:'none', color:'#111827', boxSizing:'border-box'}} />
+              <button onClick={handleSave} disabled={!name.trim()}
+                style={{height:38, padding:'0 16px', background:name.trim()?'#111827':'#E5E7EB', border:'none', borderRadius:8, fontSize:13, fontWeight:500, color:name.trim()?'#fff':'#9CA3AF', cursor:name.trim()?'pointer':'not-allowed', fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap'}}>
+                Save Search
+              </button>
+            </div>
+          )}
+          <div style={{display:'flex', gap:6, marginTop:10, flexWrap:'wrap'}}>
+            {['Remote','Full-time','$100k+','Quick Apply'].map(f => (
+              <span key={f} style={{fontSize:11, padding:'3px 9px', background:'rgba(76,98,168,0.08)', border:'1px solid rgba(76,98,168,0.25)', borderRadius:20, color:'#4C62A8', fontWeight:500}}>{f}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{flex:1, overflowY:'auto', padding:'8px 0'}}>
+          {searches.length===0 && <div style={{padding:'32px 24px', textAlign:'center', color:'#94a3b8', fontSize:13}}>No saved searches yet.</div>}
+          {searches.map(s => (
+            <div key={s.id} style={{padding:'12px 24px', display:'flex', alignItems:'flex-start', gap:12, borderBottom:'1px solid #f8fafc'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#fafbff'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              <div style={{width:32, height:32, background:'#eff6ff', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1}}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 2h9a1 1 0 011 1v9.5l-5-2.75L3 12.5V3a1 1 0 011-1z" fill="#3b82f6" stroke="#3b82f6" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+              </div>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:8, marginBottom:6}}>
+                  <span style={{fontSize:14, fontWeight:500, color:'#111827', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{s.name}</span>
+                  <span style={{fontSize:11, color:'#94a3b8', flexShrink:0}}>{s.saved}</span>
+                </div>
+                <div style={{display:'flex', gap:5, flexWrap:'wrap'}}>
+                  {s.filters.map(f => (
+                    <span key={f} style={{fontSize:11, padding:'2px 8px', background:'#F3F4F6', border:'1px solid #E5E7EB', borderRadius:20, color:'#374151'}}>{f}</span>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => setSearches(prev=>prev.filter(x=>x.id!==s.id))}
+                style={{background:'none', border:'none', cursor:'pointer', padding:4, color:'#CBD5E1', display:'flex', flexShrink:0, borderRadius:4}}
+                onMouseEnter={e=>e.currentTarget.style.color='#94a3b8'} onMouseLeave={e=>e.currentTarget.style.color='#CBD5E1'}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── More Filters Panel ────────────────────────────────────────────────────────
+function MoreFiltersPanel({ onClose, onApply }) {
+  const [exp, setExp]             = useState([]);
+  const [datePosted, setDatePosted] = useState('any');
+  const [companySize, setCompanySize] = useState([]);
+  const [visa, setVisa]           = useState(false);
+  function toggle(arr, setArr, val) { setArr(prev => prev.includes(val) ? prev.filter(x=>x!==val) : [...prev, val]); }
+  const FC = ({ label, active, onClick }) => (
+    <button onClick={onClick} style={{padding:'6px 14px', borderRadius:20, border:active?'1.5px solid #4C62A8':'1px solid #E5E7EB', background:active?'rgba(76,98,168,0.08)':'#fff', color:active?'#4C62A8':'#374151', fontSize:13, cursor:'pointer', fontFamily:"'Inter',sans-serif", fontWeight:active?500:400}}>{label}</button>
+  );
+  const ST = ({ children }) => <p style={{fontSize:13, fontWeight:600, color:'#111827', margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.05em'}}>{children}</p>;
+  return (
+    <>
+      <div onClick={onClose} style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.2)', zIndex:1000}} />
+      <div style={{position:'fixed', top:0, right:0, bottom:0, width:420, background:'#fff', zIndex:1001, display:'flex', flexDirection:'column', boxShadow:'-8px 0 32px rgba(0,0,0,0.12)', fontFamily:"'Inter',sans-serif"}}>
+        <div style={{padding:'20px 24px', borderBottom:'1px solid #E5E7EB', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0}}>
+          <h2 style={{margin:0, fontSize:17, fontWeight:600, color:'#111827'}}>More Filters</h2>
+          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'#94a3b8', padding:4}}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+        <div style={{flex:1, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:28}}>
+          <div><ST>Experience Level</ST><div style={{display:'flex', gap:8, flexWrap:'wrap'}}>{['Internship','Entry Level','Mid Level','Senior','Lead','Manager','Director'].map(v=><FC key={v} label={v} active={exp.includes(v)} onClick={()=>toggle(exp,setExp,v)}/>)}</div></div>
+          <div><ST>Date Posted</ST><div style={{display:'flex', gap:8, flexWrap:'wrap'}}>{['Any time','Past 24h','Past week','Past month'].map(v=><FC key={v} label={v} active={datePosted===v} onClick={()=>setDatePosted(v)}/>)}</div></div>
+          <div><ST>Company Size</ST><div style={{display:'flex', gap:8, flexWrap:'wrap'}}>{['1–10','11–50','51–200','201–500','500+'].map(v=><FC key={v} label={v} active={companySize.includes(v)} onClick={()=>toggle(companySize,setCompanySize,v)}/>)}</div></div>
+          <div><ST>Other</ST>
+            <label style={{display:'flex', alignItems:'center', gap:10, cursor:'pointer'}}>
+              <div onClick={()=>setVisa(v=>!v)} style={{width:20, height:20, borderRadius:6, border:visa?'2px solid #4C62A8':'2px solid #D1D5DB', background:visa?'#4C62A8':'#fff', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, cursor:'pointer'}}>
+                {visa && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3.5 3.5L10 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </div>
+              <span style={{fontSize:14, color:'#111827'}}>Visa Sponsorship Available</span>
+            </label>
+          </div>
+        </div>
+        <div style={{padding:'16px 24px', borderTop:'1px solid #E5E7EB', display:'flex', gap:10, flexShrink:0}}>
+          <button onClick={()=>{setExp([]);setDatePosted('any');setCompanySize([]);setVisa(false);}} style={{flex:1, padding:'10px 0', background:'#fff', border:'1.5px solid #E5E7EB', borderRadius:10, fontSize:14, color:'#374151', cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>Clear All</button>
+          <button onClick={()=>{onApply();onClose();}} style={{flex:2, padding:'10px 0', background:'#111827', border:'none', borderRadius:10, fontSize:14, fontWeight:500, color:'#fff', cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>Apply Filters</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Job Card ──────────────────────────────────────────────────────────────────
+function JobCard({ job, selected, onClick, saved, onToggleSave, dismissed, onDismiss, onUndo }) {
+  if (dismissed) {
+    return (
+      <div style={{background:'#fff', border:'1px solid #e5e5e5', borderRadius:8, padding:20, marginBottom:6, display:'flex', flexDirection:'column', gap:10, opacity:0.55}}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:8}}>
+          <div style={{display:'flex', alignItems:'center', gap:12}}>
+            <div style={{width:41, height:41, background:job.logoBg, border:'1px solid #E5E7EB', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:job.logoColor, flexShrink:0}}>{job.company[0]}</div>
+            <div>
+              <div style={{fontSize:15, fontWeight:600, color:'#9CA3AF'}}>{job.title}</div>
+              <div style={{fontSize:13, color:'#9CA3AF'}}>{job.company}</div>
+            </div>
+          </div>
+          <button onClick={e=>{e.stopPropagation();onUndo();}} style={{background:'none', border:'none', cursor:'pointer', padding:4, display:'flex', borderRadius:4}}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8.33398 5.33268C6.56732 5.33268 4.96732 5.99268 3.73398 7.06602L1.33398 4.66602V10.666H7.33398L4.92065 8.25268C5.84732 7.47935 7.02732 6.99935 8.33398 6.99935C10.694 6.99935 12.7007 8.53935 13.4007 10.666L14.9807 10.146C14.054 7.35268 11.434 5.33268 8.33398 5.33268Z" fill="#D1D4D9"/></svg>
+          </button>
+        </div>
+        <span style={{fontSize:12, color:'#4C62A8'}}>We won't show you this job again.</span>
+      </div>
+    );
+  }
+  return (
+    <div onClick={onClick}
+      style={{background:selected?'#fafbff':'#fff', border:selected?'1px solid #e2e8f0':'1px solid #e5e5e5', borderRadius:8, padding:20, marginBottom:6, display:'flex', flexDirection:'column', gap:10, cursor:'pointer', transition:'background 0.1s'}}
+      onMouseEnter={e=>{if(!selected)e.currentTarget.style.background='#f8faff';}}
+      onMouseLeave={e=>{if(!selected)e.currentTarget.style.background='#fff';}}>
+      {/* Top row */}
+      <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8}}>
+        <div style={{display:'flex', alignItems:'center', gap:12, flex:1, minWidth:0}}>
+          <div style={{width:41, height:41, background:job.logoBg, border:'1px solid #E5E7EB', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:14, fontWeight:700, color:job.logoColor}}>{job.company[0]}</div>
+          <div style={{flex:1, minWidth:0}}>
+            <div style={{fontSize:18, fontWeight:400, color:'#0f172a', lineHeight:'20px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{job.title}</div>
+            <div style={{fontSize:13, marginTop:2}}><span style={{color:'#475569'}}>{job.company}</span> · <span style={{color:'#94a3b8'}}>{job.posted}</span></div>
+          </div>
+        </div>
+        <button onClick={e=>{e.stopPropagation();onDismiss();}} style={{background:'none', border:'none', cursor:'pointer', padding:2, display:'flex', alignItems:'center', flexShrink:0}}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M9.99935 1.66602C5.39102 1.66602 1.66602 5.39102 1.66602 9.99935C1.66602 14.6077 5.39102 18.3327 9.99935 18.3327C14.6077 18.3327 18.3327 14.6077 18.3327 9.99935C18.3327 5.39102 14.6077 1.66602 9.99935 1.66602ZM14.166 12.991L12.991 14.166L9.99935 11.1743L7.00768 14.166L5.83268 12.991L8.82435 9.99935L5.83268 7.00768L7.00768 5.83268L9.99935 8.82435L12.991 5.83268L14.166 7.00768L11.1743 9.99935L14.166 12.991Z" fill="#D1D4D9"/></svg>
+        </button>
+      </div>
+      {/* Meta */}
+      <div style={{display:'flex', alignItems:'center', gap:12, fontSize:12, flexWrap:'wrap'}}>
+        <div style={{display:'flex', alignItems:'center', gap:5}}><LocationIconSlate /><span style={{color:'#475569'}}>{job.location}</span></div>
+        <div style={{display:'flex', alignItems:'center', gap:5}}><ClockIconSlate /><span style={{color:'#475569'}}>{job.jobType}</span></div>
+        <div style={{display:'flex', alignItems:'center', gap:5}}><SalaryIconSlate /><span style={{color:'#16A34A', fontWeight:500}}>{job.salary}</span></div>
+      </div>
+      {/* Tags */}
+      <div style={{display:'flex', alignItems:'center', gap:6, flexWrap:'wrap'}}>
+        <span style={{background:'#F3F4F6', color:'#374151', borderRadius:9999, padding:'2px 8px', fontSize:11}}>New!</span>
+        <div style={{display:'inline-flex', alignItems:'center', gap:4, background:'#DCFCE7', borderRadius:9999, padding:'2px 8px', fontSize:11, color:'#16A34A'}}>
+          {job.match}% Match <InfoIconGreen />
+        </div>
+        {job.tags.map(tag => <span key={tag} style={{background:'#F3F4F6', color:'#374151', borderRadius:9999, padding:'2px 8px', fontSize:11}}>{tag}</span>)}
+      </div>
+    </div>
+  );
+}
+
+// ─── Job Detail ────────────────────────────────────────────────────────────────
+function JobDetail({ job, isSaved, onSave }) {
+  return (
+    <div style={{display:'flex', flexDirection:'column', minHeight:'100%', fontFamily:"'Inter',sans-serif"}}>
+      {/* Banner */}
+      <div style={{height:160, background:'#5C6B9C', flexShrink:0}} />
+      {/* Header */}
+      <div style={{padding:'20px 28px 16px', borderBottom:'1px solid #E5E7EB', display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16}}>
+        <div style={{display:'flex', alignItems:'center', gap:14, flex:1, minWidth:0}}>
+          <div style={{width:44, height:44, background:job.logoBg, border:'1px solid #E5E7EB', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:17, fontWeight:700, color:job.logoColor, flexShrink:0}}>{job.company[0]}</div>
+          <div style={{flex:1, minWidth:0}}>
+            <h2 style={{fontSize:20, fontWeight:700, color:'#111827', margin:'0 0 4px', lineHeight:'26px'}}>{job.title}</h2>
+            <div style={{fontSize:13, color:'#6B7280'}}>{job.company} · {job.detailPosted} · Over 100 people clicked apply</div>
+          </div>
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:8, flexShrink:0, paddingTop:2}}>
+          <button onClick={onSave} style={{display:'flex', alignItems:'center', gap:6, padding:'8px 16px', background:isSaved?'#EFF6FF':'#fff', border:isSaved?'1px solid #93C5FD':'1px solid #E5E7EB', borderRadius:8, fontSize:13, color:isSaved?'#3B82F6':'#374151', cursor:'pointer', fontFamily:"'Inter',sans-serif", transition:'all 0.15s'}}>
+            <BookmarkIcon filled={isSaved} color={isSaved?'#3B82F6':'#374151'} />
+            {isSaved ? 'Saved' : 'Save'}
+          </button>
+          <button style={{display:'flex', alignItems:'center', gap:6, padding:'8px 16px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, color:'#374151', cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>
+            <ShareIcon /> Share
+          </button>
+          <button style={{display:'flex', alignItems:'center', gap:6, padding:'8px 20px', background:'#111827', border:'none', borderRadius:8, fontSize:13, fontWeight:500, color:'#fff', cursor:'pointer', fontFamily:"'Inter',sans-serif"}}>
+            Apply
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 6.5h8M8 3.5l3 3-3 3" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      {/* Body */}
+      <div style={{padding:'24px 28px', display:'flex', flexDirection:'column', gap:24}}>
+        {/* At a Glance */}
+        <div>
+          <h3 style={{fontSize:11, fontWeight:700, color:'#374151', margin:'0 0 12px', textTransform:'uppercase', letterSpacing:'0.08em'}}>AT A GLANCE</h3>
+          <div style={{display:'flex', flexDirection:'column', gap:10}}>
+            <div style={{display:'flex', alignItems:'center', gap:10}}><LocationIconGray /><span style={{fontSize:14, color:'#374151'}}>{job.detailLocation}</span></div>
+            <div style={{display:'flex', alignItems:'center', gap:10}}><ClockIconGray /><span style={{fontSize:14, color:'#374151'}}>{job.jobType}</span></div>
+            <div style={{display:'flex', alignItems:'center', gap:10}}><SalaryIconBlue /><span style={{fontSize:14, color:'#16A34A', fontWeight:500}}>{job.salary}</span></div>
+          </div>
+        </div>
+        <div style={{height:1, background:'#F1F5F9'}} />
+        {/* Job Description */}
+        <div>
+          <h3 style={{fontSize:11, fontWeight:700, color:'#374151', margin:'0 0 12px', textTransform:'uppercase', letterSpacing:'0.08em'}}>JOB DESCRIPTION</h3>
+          <div style={{display:'flex', flexDirection:'column', gap:12}}>
+            <p style={{fontSize:14, color:'#374151', lineHeight:1.6, margin:0}}>We're building the collaborative AI workspace where knowledge, projects, meetings, and AI tools live side by side, so work feels faster, clearer, and less fragmented. Our team believes the best products are born from deep empathy with users — and we're looking for a designer who shares that conviction.</p>
+            <p style={{fontSize:14, color:'#374151', lineHeight:1.6, margin:0}}>In this role you'll shape end-to-end experiences across our core product surface, partnering closely with product, engineering, and research to define what "collaborative and intelligent" looks like at every touchpoint. You'll own the design language for new feature areas, run rapid concept sprints, and raise the bar for craft across the entire design team.</p>
+            <p style={{fontSize:14, color:'#374151', lineHeight:1.6, margin:0}}>At every ec and accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+          </div>
+        </div>
+        <div style={{height:1, background:'#F1F5F9'}} />
+        {/* Find People */}
+        <FindPeoplePanel key={job.id} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+function Toast({ toast, onDismiss }) {
+  const isSaved = toast.type === 'saved';
+  return (
+    <div className={toast.exiting ? 'toast-out' : 'toast-in'}
+      style={{position:'fixed', bottom:24, right:24, zIndex:9999, display:'flex', alignItems:'center', gap:12, background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:'14px 16px', boxShadow:'0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)', minWidth:260, maxWidth:340, fontFamily:"'Inter',sans-serif", cursor:isSaved?'pointer':'default', userSelect:'none'}}>
+      <div style={{flexShrink:0, width:32, height:32, background:'#EFF6FF', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center'}}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 2.5h9a1 1 0 011 1v10.5l-5.5-3-5.5 3V3.5a1 1 0 011-1z" fill="#3b82f6" stroke="#3b82f6" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+      </div>
+      <div style={{flex:1, display:'flex', flexDirection:'column', gap:2}}>
+        <span style={{fontSize:14, fontWeight:600, color:'#111827', lineHeight:'20px'}}>{isSaved ? 'Job saved!' : 'Job removed from saved'}</span>
+        {isSaved && <span style={{fontSize:12, color:'#3b82f6', lineHeight:'16px'}}>View your saved jobs →</span>}
+      </div>
+      <button onClick={e=>{e.stopPropagation();onDismiss();}} style={{background:'none', border:'none', cursor:'pointer', padding:'4px', flexShrink:0, color:'#94a3b8', display:'flex', alignItems:'center', borderRadius:4}}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+      </button>
+    </div>
+  );
+}
+
+// ─── Job Board ─────────────────────────────────────────────────────────────────
+function JobBoard() {
+  const [selectedId, setSelectedId]         = useState('stripe-spd');
+  const [savedJobs, setSavedJobs]           = useState(new Set());
+  const [dismissedJobs, setDismissedJobs]   = useState(new Set());
+  const [toast, setToast]                   = useState(null);
+  const autoRef = useRef(null);
+  const exitRef = useRef(null);
+
+  const selectedJob = JOBS.find(j => j.id === selectedId);
+  const recentJobs  = JOBS.filter(j => j.section === 'recent');
+  const recJobs     = JOBS.filter(j => j.section === 'recommended');
+
+  function startExit() {
+    setToast(t => t ? { ...t, exiting: true } : null);
+    exitRef.current = setTimeout(() => setToast(null), 220);
+  }
+  function handleToggleSave(jobId) {
+    const willBeSaved = !savedJobs.has(jobId);
+    setSavedJobs(prev => { const n = new Set(prev); willBeSaved ? n.add(jobId) : n.delete(jobId); return n; });
+    clearTimeout(autoRef.current);
+    clearTimeout(exitRef.current);
+    setToast({ type: willBeSaved ? 'saved' : 'removed', uid: Date.now(), exiting: false });
+    autoRef.current = setTimeout(startExit, 4000);
+  }
+  function dismissToast() { clearTimeout(autoRef.current); startExit(); }
+  function handleDismissJob(jobId) {
+    setDismissedJobs(prev => { const n = new Set(prev); n.add(jobId); return n; });
+    if (selectedId === jobId) {
+      const visible = JOBS.filter(j => j.id !== jobId && !dismissedJobs.has(j.id));
+      if (visible.length) setSelectedId(visible[0].id);
+    }
+  }
+  function handleUndoJob(jobId) {
+    setDismissedJobs(prev => { const n = new Set(prev); n.delete(jobId); return n; });
+  }
+
+  return (
+    <>
+      {/* Left column */}
+      <div style={{flex:'0 0 479px', overflowY:'auto', display:'flex', flexDirection:'column', background:'white', borderRadius:24, borderTop:'1px solid #e5e5e5', borderRight:'1px solid #e5e5e5', padding:'0 16px'}}>
+        <div style={{padding:'24px 20px 0'}}>
+          <h2 style={{fontSize:24, fontWeight:500, color:'#0f172a', margin:0, fontFamily:"'Lora', serif"}}>Recent job postings</h2>
+        </div>
+        {recentJobs.map(job => (
+          <JobCard key={job.id} job={job}
+            selected={selectedId === job.id}
+            onClick={() => !dismissedJobs.has(job.id) && setSelectedId(job.id)}
+            saved={savedJobs.has(job.id)} onToggleSave={handleToggleSave}
+            dismissed={dismissedJobs.has(job.id)}
+            onDismiss={() => handleDismissJob(job.id)}
+            onUndo={() => handleUndoJob(job.id)} />
+        ))}
+        <div style={{padding:'24px 20px 0'}}>
+          <h2 style={{fontSize:24, fontWeight:500, color:'#0f172a', margin:0, fontFamily:"'Lora', serif"}}>Recommended for you</h2>
+        </div>
+        {recJobs.map(job => (
+          <JobCard key={job.id} job={job}
+            selected={selectedId === job.id}
+            onClick={() => !dismissedJobs.has(job.id) && setSelectedId(job.id)}
+            saved={savedJobs.has(job.id)} onToggleSave={handleToggleSave}
+            dismissed={dismissedJobs.has(job.id)}
+            onDismiss={() => handleDismissJob(job.id)}
+            onUndo={() => handleUndoJob(job.id)} />
+        ))}
+      </div>
+      {/* Right panel */}
+      {selectedJob && (
+        <div style={{flex:1, minWidth:0, display:'flex', flexDirection:'column', overflowY:'auto', background:'white', borderRadius:24}}>
+          <JobDetail job={selectedJob} isSaved={savedJobs.has(selectedJob.id)} onSave={() => handleToggleSave(selectedJob.id)} />
+        </div>
+      )}
+      {/* Toast */}
+      {toast && <Toast key={toast.uid} toast={toast} onDismiss={dismissToast} />}
+    </>
+  );
+}
+
+// ─── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [showSaveSearch, setShowSaveSearch]   = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  return (
+    <div style={{display:'flex', flexDirection:'column', flex:1, height:'100%', overflow:'hidden'}}>
+      <FilterBar onSaveSearch={() => setShowSaveSearch(true)} onMoreFilters={() => setShowMoreFilters(true)} />
+      <div style={{display:'flex', gap:24, padding:'0 24px 24px', flex:1, overflow:'hidden'}}>
+        <JobBoard />
+      </div>
+      {showSaveSearch  && <SaveSearchModal onClose={() => setShowSaveSearch(false)} />}
+      {showMoreFilters && <MoreFiltersPanel onClose={() => setShowMoreFilters(false)} onApply={() => {}} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app-root')).render(<App />);
+</script>
+
+</body>
+</html>
