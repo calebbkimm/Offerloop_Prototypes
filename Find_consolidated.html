@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Find — Professional Contact Finder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Google Sans Flex', 'Google Sans', system-ui, -apple-system, sans-serif; background: #FFFFFF; color: #111418; -webkit-font-smoothing: antialiased; overflow: hidden; }
+  :root {
+    --bg: #f7f6f3; --card: #ffffff; --ink: #111418; --ink-soft: #4b5563; --muted: #8a8f98;
+    --line: #e7e5df; --line-soft: #efede7; --side-bg: #0d1623; --side-ink: #e8eaee;
+    --side-muted: #8b94a4; --side-hover: rgba(255,255,255,0.04); --side-active: #1a2740;
+    --accent: #6b7a8f; --accent-ink: #ffffff; --good: oklch(0.62 0.10 155); --warn: oklch(0.74 0.14 75);
+    --serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #d6d4cd; border-radius: 10px; border: 2px solid var(--bg); }
+  textarea::placeholder, input::placeholder { color: #b3b6bf !important; opacity: 1; }
+  textarea, textarea:focus, textarea:focus-visible { outline: none !important; box-shadow: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script type="text/babel">
+
+// ===== TWEAKS PANEL =====
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;background:rgba(250,249,247,.78);color:#29261b;-webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);border:.5px solid rgba(255,255,255,.6);border-radius:14px;box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden;min-height:0}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-field{appearance:none;box-sizing:border-box;width:100%;min-width:0;height:26px;padding:0 8px;border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);transition:left .15s,width .15s}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);transition:transform .12s,box-shadow .12s}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current; if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    offsetRef.current = { x: Math.min(Math.max(PAD, window.innerWidth - w - PAD), Math.max(PAD, offsetRef.current.x)), y: Math.min(Math.max(PAD, window.innerHeight - h - PAD), Math.max(PAD, offsetRef.current.y)) };
+    panel.style.right = offsetRef.current.x + 'px'; panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+  React.useEffect(() => {
+    const onMsg = (e) => { if (e?.data?.type === '__activate_edit_mode') setOpen(true); else if (e?.data?.type === '__deactivate_edit_mode') setOpen(false); };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+  const onDragStart = (e) => {
+    const panel = dragRef.current; if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY, startRight = window.innerWidth - r.right, startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => { offsetRef.current = { x: startRight - (ev.clientX - sx), y: startBottom - (ev.clientY - sy) }; clampToViewport(); };
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+  };
+  if (!open) return null;
+  return (
+    <><style>{__TWEAKS_STYLE}</style>
+    <div ref={dragRef} className="twk-panel" style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+      <div className="twk-hd" onMouseDown={onDragStart}><b>{title}</b><button className="twk-x" onClick={() => setOpen(false)}>✕</button></div>
+      <div className="twk-body">{children}</div>
+    </div></>
+  );
+}
+function TweakSection({ label, children }) { return (<><div className="twk-sect">{label}</div>{children}</>); }
+function TweakRow({ label, value, children, inline = false }) {
+  return (<div className={inline ? 'twk-row twk-row-h' : 'twk-row'}><div className="twk-lbl"><span>{label}</span>{value != null && <span>{value}</span>}</div>{children}</div>);
+}
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (<TweakRow label={label} value={`${value}${unit}`}><input type="range" className="twk-slider" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} /></TweakRow>);
+}
+function TweakToggle({ label, value, onChange }) {
+  return (<div className="twk-row twk-row-h"><div className="twk-lbl"><span>{label}</span></div><button type="button" className="twk-toggle" data-on={value ? '1' : '0'} onClick={() => onChange(!value)}><i /></button></div>);
+}
+function TweakSelect({ label, value, options, onChange }) {
+  return (<TweakRow label={label}><select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>{options.map((o) => { const v = typeof o === 'object' ? o.value : o; const l = typeof o === 'object' ? o.label : o; return <option key={v} value={v}>{l}</option>; })}</select></TweakRow>);
+}
+function TweakRadio({ label, value, options, onChange }) {
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+  return (
+    <TweakRow label={label}>
+      <div role="radiogroup" className="twk-seg" onClick={(e) => { const i = Math.floor(((e.clientX - e.currentTarget.getBoundingClientRect().left - 2) / (e.currentTarget.offsetWidth - 4)) * n); if (opts[Math.max(0, Math.min(n-1, i))]) onChange(opts[Math.max(0, Math.min(n-1, i))].value); }}>
+        <div className="twk-seg-thumb" style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`, width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (<button key={o.value} type="button" role="radio" aria-checked={o.value === value}>{o.label}</button>))}
+      </div>
+    </TweakRow>
+  );
+}
+function __twkIsLight(hex) {
+  const h = String(hex).replace('#', ''); const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, '0');
+  const n = parseInt(x.slice(0, 6), 16); if (Number.isNaN(n)) return true;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r * 299 + g * 587 + b * 114 > 148000;
+}
+function TweakColor({ label, value, options, onChange }) {
+  if (!options || !options.length) {
+    return (<div className="twk-row twk-row-h"><div className="twk-lbl"><span>{label}</span></div><input type="color" className="twk-swatch" value={value} onChange={(e) => onChange(e.target.value)} /></div>);
+  }
+  const key = (o) => String(JSON.stringify(o)).toLowerCase(); const cur = key(value);
+  return (<TweakRow label={label}><div className="twk-chips" role="radiogroup">{options.map((o, i) => { const colors = Array.isArray(o) ? o : [o]; const [hero, ...rest] = colors; const on = key(o) === cur; return (<button key={i} type="button" className="twk-chip" data-on={on ? '1' : '0'} style={{ background: hero }} onClick={() => onChange(o)}>{rest.length > 0 && (<span>{rest.slice(0,4).map((c, j) => <i key={j} style={{ background: c }} />)}</span>)}{on && <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7.2 5.8 10 11 4.2" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" stroke={__twkIsLight(hero) ? 'rgba(0,0,0,.78)' : '#fff'} /></svg>}</button>); })}</div></TweakRow>);
+}
+
+
+// ===== ICONS =====
+const Icon = ({ d, size = 18, stroke = 1.6, fill = "none", style: s, ...p }) =>
+  <svg width={size} height={size} viewBox="0 0 20 20" fill={fill} stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" style={{ stroke: "rgb(0,0,0)", ...s }} {...p}>{typeof d === 'string' ? <path d={d} /> : d}</svg>;
+
+const IconSearch = ({ size = 16, ...p }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none" {...p}><path d="M10.33 9.33H9.81L9.62 9.15A6.67 6.67 0 1 0 8.67 10L9.8 11.13 12.67 14 13.66 13l-3.33-3.33ZM6.33 9.33A3.33 3.33 0 1 1 9.67 6a3.33 3.33 0 0 1-3.34 3.33Z" fill="#F3F3F6"/></svg>;
+const IconCoffee = ({ size = 16, ...p }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none" {...p}><path d="M12.33 2H4a1.33 1.33 0 0 0-1.33 1.33V7.14C2.67 9.69 4.63 11.93 7.19 12c2.64.08 4.81-2.04 4.81-4.67V6.67h.33A2.33 2.33 0 0 0 12.33 2ZM3.33 12.67h9.34c.36 0 .66.3.66.66 0 .37-.3.67-.66.67H3.33a.67.67 0 0 1 0-1.33Z" fill="#F3F3F6"/></svg>;
+const IconTracker = ({ size = 16, ...p }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none" {...p}><path d="M8 1.33A6.67 6.67 0 1 0 14.67 8 6.67 6.67 0 0 0 8 1.33ZM8 12A4 4 0 1 1 12 8 4 4 0 0 1 8 12Z" fill="#F3F3F6"/><circle cx="8" cy="8" r="1.33" fill="#F3F3F6"/></svg>;
+const IconBoard = ({ size = 16, ...p }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none" {...p}><path d="M2 2h5.33v5.33H2ZM8.67 2H14v5.33H8.67ZM2 8.67h5.33V14H2ZM8.67 8.67H14V14H8.67Z" fill="#F3F3F6"/></svg>;
+const IconTag = (p) => <Icon {...p} d={<><path d="M3 3h6l8 8-6 6-8-8V3z"/><circle cx="6.5" cy="6.5" r="1"/></>}/>;
+const IconDoc = (p) => <Icon {...p} d={<><path d="M5 2h7l4 4v12H5z"/><path d="M12 2v4h4"/><path d="M8 11h6 M8 14h4"/></>}/>;
+const IconBolt = (p) => <Icon {...p} d={<><path d="M11 2 4 11h5l-1 7 7-9h-5l1-7z"/></>} fill="currentColor" stroke="none"/>;
+const IconChev = (p) => <Icon {...p} d="M6 8l4 4 4-4"/>;
+const IconSidebar = (p) => <Icon {...p} d={<><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M8 4v13"/></>}/>;
+const IconMail = (p) => <Icon {...p} d={<><rect x="2.5" y="4.5" width="15" height="11" rx="1.5" style={{stroke:"rgb(10,10,10)"}}/><path d="M3 6l7 5 7-5" style={{stroke:"rgb(0,0,0)"}}/></>}/>;
+const IconUpload = (p) => <Icon {...p} d={<><path d="M10 13V3 M6 7l4-4 4 4"/><path d="M3 14v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2"/></>}/>;
+const IconLinkedin = ({ size = 16, ...p }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none" {...p}><path d="M10.67 5.33a4 4 0 0 1 4 4V14H12V9.33a1.33 1.33 0 0 0-2.67 0V14H6.67V9.33a4 4 0 0 1 4-4Z" stroke="#0A0A0A" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 6H1.33V14H4V6Z" stroke="#0A0A0A" strokeLinecap="round" strokeLinejoin="round"/><circle cx="2.67" cy="2.67" r="1.33" stroke="#0A0A0A" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IconSparkle = (p) => <Icon {...p} d={<><path d="M10 2v4 M10 14v4 M2 10h4 M14 10h4" style={{stroke:"rgb(225,122,62)"}}/><path d="M5 5l2 2 M13 13l2 2 M5 15l2-2 M13 7l2-2" style={{stroke:"rgb(225,122,62)"}}/></>}/>;
+const IconFilter = (p) => <Icon {...p} d={<><path d="M3 5h14 M5 10h10 M8 15h4"/></>}/>;
+const IconRefresh = () => <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10a6 6 0 0 1 10-4.3M16 10a6 6 0 0 1-10 4.3"/><path d="M14 3v3h-3 M6 17v-3h3"/></svg>;
+const IconDownload = () => <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3v10 M6 9l4 4 4-4"/><path d="M3 17h14"/></svg>;
+const IconTrash = () => <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h12 M8 6V4h4v2 M6 6l1 11h6l1-11"/></svg>;
+const IconBookmark = () => <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h8v14l-4-3-4 3z"/></svg>;
+const IconArchive = () => <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="3"/><path d="M4 7v10h12V7"/><path d="M8 11h4"/></svg>;
+function IconEdit() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 13.76V14.09H2.5v-.33h11ZM9.98 1.83a.19.19 0 0 1 .23 0l1.89 1.89a.16.16 0 0 1 0 .23L4.62 11.43H2.5V9.3l7.48-7.48Zm-7.14 7.61v1.64H4.48l6.91-6.91.35-.36-.35-.35-.94-.94-.35-.36-7.26 7.27Z" stroke="white"/></svg>; }
+function IconArrowUp() { return <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 16V5"/><path d="M5 10l5-5 5 5"/></svg>; }
+
+
+// ===== SIDEBAR =====
+const sidebarStyles = {
+  shell: { width: 232, minWidth: 232, height: '100vh', background: '#0b1733', color: '#dbe1ee', display: 'flex', flexDirection: 'column', padding: '14px 12px', fontSize: 13.5 },
+  navItem: (active, id) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '8.5px 10px', borderRadius: 8, color: '#ffffff', background: active && id === 'find' ? '#1E2D4D' : 'transparent', cursor: 'pointer', fontWeight: active ? 500 : 400, transition: 'background 120ms', userSelect: 'none' }),
+};
+
+function Sidebar({ active, onNav, credits = 210, max = 300 }) {
+  const items = [{ id: 'find', label: 'Find', I: IconSearch }, { id: 'coffee', label: 'Coffee Chat Prep', I: IconCoffee }, { id: 'tracker', label: 'Tracker', I: IconTracker }, { id: 'board', label: 'Job Board', I: IconBoard }];
+  const bottom = [{ id: 'pricing', label: 'Pricing', I: IconTag }, { id: 'docs', label: 'Documentation', I: IconDoc }];
+  const pct = Math.round(credits / max * 100);
+  return (
+    <aside style={sidebarStyles.shell}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px', borderRadius: 8, cursor: 'pointer' }}>
+          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #6f8bff 0%, #2538b5 55%, #0c1238 100%)', flexShrink: 0 }}></div>
+          <div style={{ fontWeight: 500, fontSize: 13 }}>John Doe</div>
+          <IconChev size={13} style={{ opacity: 0.6 }} />
+        </div>
+        <button style={{ background: 'transparent', border: 'none', color: '#8b94a4', padding: 6, borderRadius: 6, display: 'flex', cursor: 'pointer' }}><IconSidebar size={16} /></button>
+      </div>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {items.map(({ id, label, I }) =>
+          <div key={id} style={sidebarStyles.navItem(active === id, id)} onClick={() => onNav(id)}
+            onMouseEnter={(e) => { if (active !== id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseLeave={(e) => { if (active !== id) e.currentTarget.style.background = 'transparent'; }}>
+            <I size={15} />
+            <span style={{ color: 'rgb(147,197,253)' }}>{label}</span>
+          </div>
+        )}
+      </nav>
+      <div style={{ flex: 1 }}></div>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 8 }}>
+        {bottom.map(({ id, label, I }) =>
+          <div key={id} style={sidebarStyles.navItem(active === id, id)} onClick={() => onNav(id)}
+            onMouseEnter={(e) => { if (active !== id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseLeave={(e) => { if (active !== id) e.currentTarget.style.background = 'transparent'; }}>
+            <I size={15} /><span>{label}</span>
+          </div>
+        )}
+      </nav>
+      <div style={{ padding: '10px 10px 4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ fontSize: 10.5, letterSpacing: '0.1em', color: '#8b94a4', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+          <span>Credits</span><span style={{ color: '#cfd4dd', letterSpacing: 0 }}>{credits} / {max}</span>
+        </div>
+        <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: pct + '%', background: 'linear-gradient(90deg, #6f8bff, #b2c0ff)', borderRadius: 99 }}></div>
+        </div>
+        <button style={{ marginTop: 12, width: '100%', background: '#1E2D4D', color: '#fff', border: 'none', padding: '10px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#2a3d68'}
+          onMouseLeave={(e) => e.currentTarget.style.background = '#1E2D4D'}
+          onClick={() => onNav('pricing')}>
+          <IconBolt size={13} /> Upgrade Plan
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+
+// ===== SPINNER =====
+function Spinner() {
+  return <span style={{ display: 'inline-block', width: 14, height: 14, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.35)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite' }}></span></span>;
+}
+
+// ===== FIND VIEW =====
+const hintU = { textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: 3, color: '#5a6377', cursor: 'help' };
+const COPY = {
+  people: { title: 'Find People', placeholder: 'e.g. Stripe engineers who studied at Michigan, hiring for summer 2026 SWE interns', hint: <>For best results include <span style={{...hintU, fontSize:"14px", color:"rgb(100,116,139)"}} title="e.g. Stripe, Figma">company</span>, <span style={{...hintU, color:"rgb(100,116,139)", fontSize:"14px"}} title="e.g. Product Manager, SWE">role</span>, and <span style={{...hintU, fontSize:"14px", color:"rgb(100,116,139)"}} title="e.g. NYC, remote">location</span> to get personalized email drafts</>, chips: ['Goldman investment banking analysts who went to Michigan', 'PMs at seed-stage AI companies in SF', 'Stripe engineers who studied CS at Berkeley'], sliderMin: 1, sliderMax: 20 },
+  companies: { title: 'Find Companies', placeholder: 'e.g. fintech startups in NYC hiring summer 2026 analysts', hint: <>For best results include <span style={hintU} title="e.g. fintech, AI, climate">industry</span>, <span style={hintU} title="Seed, Series A, public">stage</span>, and <span style={hintU} title="e.g. NYC, remote">location</span>.</>, chips: ['fintech startups in NYC hiring summer analysts', 'seed-stage AI companies in SF', 'climate-tech companies Series A to B'], sliderMin: 5, sliderMax: 100 },
+  managers: { title: 'Find Hiring Managers', placeholder: 'e.g. linkedin.com/jobs/...', hint: <>For best results enter <span style={hintU} title="Greenhouse, Lever, LinkedIn URLs">job posting links.</span></>, chips: ['linkedin.com/jobs/view/3812240183', 'boards.greenhouse.io/anthropic/jobs/4112', 'jobs.lever.co/figma/swe-new-grad'], sliderMin: 1, sliderMax: 10 }
+};
+
+function Slider({ value, onChange, min = 1, max = 25 }) {
+  const pct = (value - min) / (max - min) * 100;
+  return (
+    <div style={{ flex: 1, position: 'relative', height: 6 }}>
+      <div style={{ position: 'absolute', inset: 0, top: '50%', transform: 'translateY(-50%)', height: 4, background: '#e3e1da', borderRadius: 99 }}></div>
+      <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: 0, width: pct + '%', height: 4, background: '#4A60A8', borderRadius: 99 }}></div>
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ width: '100%', position: 'absolute', inset: 0, appearance: 'none', WebkitAppearance: 'none', background: 'transparent', cursor: 'pointer', margin: 0 }} />
+      <style>{`input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#4A60A8;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.25)}`}</style>
+    </div>
+  );
+}
+
+function FindView({ tab, setTab, params, setParams, onSearch, loading, onOpenTemplate }) {
+  const [focused, setFocused] = React.useState(false);
+  const copy = COPY[tab];
+  React.useEffect(() => { setParams((p) => ({ ...p, count: Math.min(Math.max(p.count, copy.sliderMin), copy.sliderMax) })); }, [tab]);
+  const tabs = [{ id: 'people', label: 'People' }, { id: 'companies', label: 'Companies' }, { id: 'managers', label: 'Hiring Managers' }];
+  const canSubmit = params.query.trim().length > 0 && !loading;
+  const submit = () => { if (canSubmit) onSearch(); };
+  const btnBase = { background: '#fff', color: '#3a4150', border: '1px solid #e7e5df', borderRadius: 9, padding: '11px 18px', fontWeight: 500, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' };
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '10vh 32px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 500, textAlign: 'center', letterSpacing: '-0.012em', margin: '0 0 12px', color: '#0e1116' }}>{copy.title}</h1>
+        <p style={{ textAlign: 'center', color: 'rgb(148,163,184)', fontSize: 16, margin: '0 0 26px', lineHeight: 1.5 }}>Search people, companies, or hiring managers — we'll find contact info and draft outreach</p>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}>
+          <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 12, border: '1px solid #E5E5E5', overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,18,25,0.06)' }}>
+            {tabs.map((tt, i) => {
+              const active = tab === tt.id;
+              return <button key={tt.id} onClick={() => setTab(tt.id)} style={{ padding: '12px 36px', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: active ? '#fff' : '#000', background: active ? '#4A60A8' : 'transparent', border: 'none', borderLeft: !active && i !== 0 ? '1px solid #E5E5E5' : 'none', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'inherit' }}>{tt.label}</button>;
+            })}
+          </div>
+        </div>
+        <div style={{ background: '#FAFAFA', border: focused ? '1px solid #9aa6c8' : '1px solid #E5E5E5', borderRadius: 14, padding: '18px 18px 20px', boxShadow: focused ? '0 0 0 4px rgba(74,96,168,0.07)' : 'none', transition: 'box-shadow 200ms, border-color 200ms' }}>
+          <div style={{ color: 'rgb(100,116,139)', fontSize: 14, marginBottom: 12, marginLeft: 4 }}>{copy.hint}</div>
+          <div style={{ position: 'relative', background: '#fff', border: '1px solid #E5E5E5', borderRadius: 10, padding: '14px 16px', minHeight: 120 }}>
+            <textarea style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontFamily: 'inherit', fontSize: 14.5, color: '#1f242c', resize: 'none', minHeight: 92, lineHeight: 1.55, paddingRight: 48, display: 'block' }}
+              placeholder={copy.placeholder} value={params.query}
+              onChange={(e) => setParams({ ...params, query: e.target.value })}
+              onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit(); }} />
+            <button style={{ position: 'absolute', right: 12, bottom: 12, width: 34, height: 34, borderRadius: '50%', background: '#4A60A8', opacity: canSubmit ? 1 : 0.75, color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: canSubmit ? 'pointer' : 'not-allowed' }} onClick={submit}>
+              {loading ? <Spinner /> : <IconArrowUp />}
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+            {copy.chips.map((c, i) =>
+              <button key={i} style={{ background: '#fff', border: '1px solid #e7e5df', borderRadius: 999, padding: '7px 14px', fontSize: 12.5, color: '#3a4150', cursor: 'pointer', fontFamily: 'inherit' }}
+                onClick={() => setParams({ ...params, query: c })}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#f3f1ec'; e.currentTarget.style.borderColor = '#cfcdc6'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e7e5df'; }}>{c}</button>
+            )}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 26, padding: '0 4px' }}>
+          <div style={{ fontSize: 12, color: 'rgb(100,116,139)', flexShrink: 0 }}>How many?</div>
+          <Slider value={params.count} onChange={(v) => setParams({ ...params, count: v })} min={copy.sliderMin} max={copy.sliderMax} />
+          <div style={{ fontSize: 14, fontWeight: 500, color: '#3a4150', minWidth: 28, textAlign: 'right' }}>{params.count}</div>
+          <div style={{ color: 'rgb(100,116,139)', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>{params.count} credits</div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 22 }}>
+          <button style={btnBase} onMouseEnter={(e) => e.currentTarget.style.background = '#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'} onClick={onOpenTemplate}>
+            <IconMail size={18} /> <span style={{ fontSize: 18 }}>Email Template</span>
+          </button>
+          <button style={btnBase} onMouseEnter={(e) => e.currentTarget.style.background = '#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'} onClick={() => alert('Upload your resume to personalize outreach (demo).')}>
+            <IconUpload size={18} /> <span style={{ fontSize: 18 }}>Upload Resume</span>
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+
+// ===== RESULTS VIEWS =====
+const resBtn = (variant = 'default') => ({ background: variant === 'primary' ? '#4A60A8' : '#fff', color: variant === 'primary' ? '#fff' : '#3a4150', border: variant === 'primary' ? 'none' : '1px solid #e7e5df', borderRadius: 9, padding: '8px 14px', fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', transition: 'background 120ms' });
+const contactCardStyle = { background: '#fff', border: '1px solid #e7e5df', borderRadius: 12, padding: '16px 18px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 14 };
+const actionIconBtn = { background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', display: 'flex', alignItems: 'center' };
+
+function Avatar({ name, seed }) {
+  const initials = name.split(' ').map((s) => s[0]).slice(0, 2).join('').toUpperCase();
+  return <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, hsl(${seed * 47 % 360} 35% 55%), hsl(${(seed * 47 + 60) % 360} 40% 35%))`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, fontWeight: 600 }}>{initials}</div>;
+}
+
+function SkeletonCard({ delay }) {
+  return <div style={{ ...contactCardStyle, animation: `pulse 1.6s ease-in-out infinite`, animationDelay: delay + 'ms' }}><div style={{ width: 34, height: 34, borderRadius: '50%', background: '#ece9e1' }}></div><div style={{ flex: 1 }}><div style={{ height: 12, background: '#ece9e1', borderRadius: 4, width: '30%', marginBottom: 8 }}></div><div style={{ height: 11, background: '#ece9e1', borderRadius: 4, width: '50%' }}></div></div></div>;
+}
+
+function Pagination({ page, perPage, total, onPage, onPerPage }) {
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 18, marginTop: 18, fontSize: 13, color: '#3a4150' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span>Rows per page</span>
+        <select value={perPage} onChange={(e) => onPerPage(Number(e.target.value))} style={{ border: '1px solid #e7e5df', borderRadius: 7, padding: '4px 8px', fontSize: 13, background: '#fff', cursor: 'pointer' }}>
+          {[6, 12, 24, 50].map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+      <div>Page {page} of {totalPages}</div>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {[{ l: '«', a: 1 }, { l: '‹', a: Math.max(1, page - 1) }, { l: '›', a: Math.min(totalPages, page + 1) }, { l: '»', a: totalPages }].map((b, bi) => {
+          const dis = (bi < 2 && page === 1) || (bi >= 2 && page === totalPages);
+          return <button key={b.l} disabled={dis} onClick={() => onPage(b.a)} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #e7e5df', background: '#fff', color: dis ? '#c6cbd6' : '#3a4150', cursor: dis ? 'not-allowed' : 'pointer', fontSize: 13 }}>{b.l}</button>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ResultsHeader({ title, count, label, viewKey, onViewChange, onBack }) {
+  return (
+    <>
+      <h1 style={{ fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 500, color: '#0e1116', letterSpacing: '-0.01em', margin: '0 0 4px' }}>{title}</h1>
+      <p style={{ color: 'rgb(100,116,139)', fontSize: 16, margin: '0 0 18px', paddingBottom: 18, borderBottom: '1px solid #E2E8F0' }}>{count} total ({label})</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ fontSize: 18, letterSpacing: '0.14em', fontWeight: 700, color: '#3a4150', textTransform: 'uppercase' }}>{label.toUpperCase()}:</div>
+        <div style={{ display: 'flex', gap: 24 }}>
+          <button style={{ ...resBtn(viewKey === 'outbox' ? 'primary' : 'default'), width: 171, height: 47, fontSize: 18, justifyContent: 'center' }} onClick={() => onViewChange('outbox')}>View in Outbox</button>
+          <button style={{ ...resBtn(viewKey === 'tracker' ? 'primary' : 'default'), width: 171, height: 47, fontSize: 18, justifyContent: 'center' }} onClick={() => onViewChange('tracker')}>View in Tracker</button>
+          <button style={{ ...resBtn(), width: 171, height: 47, fontSize: 18, justifyContent: 'center' }} onClick={onBack}>Back to Search</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PeopleContactsView({ results, loading, onBack, onDraftEmail, viewKey, setViewKey, count }) {
+  const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(6);
+  React.useEffect(() => setPage(1), [results]);
+  const start = (page - 1) * perPage;
+  const slice = results.slice(start, start + perPage);
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '38px 40px 80px' }}>
+        <ResultsHeader title="Find People" count={count} label="contacts" viewKey={viewKey} onViewChange={setViewKey} onBack={onBack} />
+        {loading && [...Array(6)].map((_, i) => <SkeletonCard key={i} delay={i * 80} />)}
+        {!loading && slice.map((r, i) =>
+          <div key={start + i} style={contactCardStyle}>
+            <Avatar name={r.name} seed={start + i + 1} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#0e1116' }}>{r.name}</div>
+              <div style={{ color: '#3a4150', marginTop: 2, fontSize: 12 }}>{r.role} @ {r.company}</div>
+              <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#5a78c4', textDecoration: 'none', marginTop: 4, display: 'inline-block', fontSize: 12 }}>{r.email}</a>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={{ ...resBtn('primary'), background: '#1E2D4D', fontSize: 14 }} onClick={() => onDraftEmail && onDraftEmail(r)}><IconEdit /> Draft Email</button>
+              <button style={{ ...resBtn(), color: 'rgb(10,10,10)', fontSize: 14 }} onMouseEnter={(e) => e.currentTarget.style.background = '#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}><IconLinkedin size={13} /> LinkedIn</button>
+            </div>
+          </div>
+        )}
+        {!loading && results.length > 0 && <Pagination page={page} perPage={perPage} total={results.length} onPage={setPage} onPerPage={(n) => { setPerPage(n); setPage(1); }} />}
+      </div>
+    </main>
+  );
+}
+
+function ManagersListView({ results, loading, onBack, count, viewKey, setViewKey }) {
+  const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(6);
+  const start = (page - 1) * perPage;
+  const slice = results.slice(start, start + perPage);
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '38px 40px 80px' }}>
+        <ResultsHeader title="Find Hiring Managers" count={count} label="hiring managers" viewKey={viewKey} onViewChange={setViewKey} onBack={onBack} />
+        {loading && [...Array(6)].map((_, i) => <SkeletonCard key={i} delay={i * 80} />)}
+        {!loading && slice.map((r, i) =>
+          <div key={start + i} style={contactCardStyle}>
+            <Avatar name={r.name} seed={start + i + 5} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
+              <div style={{ fontSize: 13, color: '#3a4150', marginTop: 2 }}>Hiring Manager @ {r.company}</div>
+              <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 12.5, color: '#5a78c4', textDecoration: 'none', marginTop: 4, display: 'inline-block' }}>{r.email}</a>
+            </div>
+            <button style={{ ...resBtn(), color: 'rgb(10,10,10)' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}><IconLinkedin size={13} /> LinkedIn</button>
+          </div>
+        )}
+        {!loading && results.length > 0 && <Pagination page={page} perPage={perPage} total={results.length} onPage={setPage} onPerPage={(n) => { setPerPage(n); setPage(1); }} />}
+      </div>
+    </main>
+  );
+}
+
+function CompaniesSpreadsheetView({ results, loading, onBack, count }) {
+  const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(12);
+  const [search, setSearch] = React.useState('');
+  const [selected, setSelected] = React.useState(new Set());
+  const filtered = results.filter((r) => !search.trim() || (r.name + r.industry + r.location).toLowerCase().includes(search.toLowerCase()));
+  const start = (page - 1) * perPage;
+  const slice = filtered.slice(start, start + perPage);
+  const toggle = (i) => { const s = new Set(selected); s.has(i) ? s.delete(i) : s.add(i); setSelected(s); };
+  const exportCSV = () => {
+    const rows = [['Company', 'Website', 'LinkedIn', 'Industry', 'Location'], ...filtered.map((r) => [r.name, r.website, r.linkedin, r.industry, r.location])];
+    const csv = rows.map((r) => r.map((c) => `"${(c || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'companies.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+  const gridCols = '36px 2fr 1fr 1fr 1.4fr 1.4fr 130px';
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '38px 40px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 500, color: '#0e1116', margin: '0 0 4px' }}>Find Companies</h1>
+        <p style={{ color: 'rgb(100,116,139)', fontSize: 16, margin: '0 0 18px', paddingBottom: 18, borderBottom: '1px solid #E2E8F0' }}>{count} total (companies)</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e7e5df', borderRadius: 9, padding: '8px 12px', minWidth: 280 }}>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontSize: 13.5, fontFamily: 'inherit', color: '#3a4150' }} />
+          </div>
+          <button style={resBtn()} onClick={onBack} onMouseEnter={(e) => e.currentTarget.style.background='#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background='#fff'}><IconRefresh /> Refresh</button>
+          <button style={resBtn()} onClick={exportCSV} onMouseEnter={(e) => e.currentTarget.style.background='#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background='#fff'}><IconDownload /> Export CSV</button>
+          <button style={resBtn()} onClick={() => setSelected(new Set())} onMouseEnter={(e) => e.currentTarget.style.background='#fdf2f2'} onMouseLeave={(e) => e.currentTarget.style.background='#fff'}><IconTrash /> Delete All</button>
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #e7e5df', borderRadius: 10, overflow: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: gridCols, alignItems: 'center', gap: 8, padding: '12px 14px', minWidth: 920, fontSize: 14, fontWeight: 550, color: '#0A0A0A', borderBottom: '1px solid #e7e5df' }}>
+            <div></div><div>Company</div><div>Website</div><div>LinkedIn</div><div>Industry</div><div>Location</div><div>Action</div>
+          </div>
+          {loading && [...Array(8)].map((_, i) => <div key={i} style={{ display: 'grid', gridTemplateColumns: gridCols, minWidth: 920, alignItems: 'center', gap: 8, padding: '13px 14px', borderBottom: '1px solid #f3f1ec' }}><div style={{ width: 36, display: 'flex', justifyContent: 'center' }}><input type="checkbox" disabled /></div><div style={{ height: 12, background: '#ece9e1', borderRadius: 4, width: '60%', animation: `pulse 1.6s ease-in-out infinite`, animationDelay: `${i * 80}ms` }}></div><div></div><div></div><div></div><div></div><div></div></div>)}
+          {!loading && slice.map((r, i) =>
+            <div key={start + i} style={{ display: 'grid', gridTemplateColumns: gridCols, minWidth: 920, alignItems: 'center', gap: 8, padding: '13px 14px', fontSize: 14, color: '#0A0A0A', borderBottom: '1px solid #f3f1ec', background: '#fff', transition: 'background 80ms' }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#fbfaf7'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
+              <div style={{ width: 36, display: 'flex', justifyContent: 'center' }}><input type="checkbox" checked={selected.has(start + i)} onChange={() => toggle(start + i)} /></div>
+              <div style={{ fontWeight: 500 }}>{r.name}</div>
+              <div><a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#0A0A0A', textDecoration: 'none' }}>Website</a></div>
+              <div><a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#0A0A0A', textDecoration: 'none' }}>LinkedIn</a></div>
+              <div>{r.industry}</div><div>{r.location}</div>
+              <div style={{ display: 'flex', gap: 14, color: '#767676' }}><button style={actionIconBtn}><IconBookmark /></button><button style={actionIconBtn}><IconArchive /></button></div>
+            </div>
+          )}
+        </div>
+        {!loading && filtered.length > 0 && <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} onPerPage={(n) => { setPerPage(n); setPage(1); }} />}
+      </div>
+    </main>
+  );
+}
+
+
+// ===== EMAIL TEMPLATE VIEW =====
+const SAVED = ['Networking', 'Referral Request', 'Follow Up'];
+const SIGNOFFS = ['Best,', 'Thanks', 'Yours Truly,'];
+const bodyByIntent = {
+  'Networking': `Dear Contact,\nI'm a junior at UC San Diego reaching out because I admire the work you've been doing on the team — particularly the recent product launches.\nI'm exploring careers in product and design, and your trajectory really resonates with where I'd like to head.\n\nWould you be open to a quick 15-minute chat sometime in the next couple of weeks?`,
+  'Referral Request': `Dear Contact,\nI'm a junior at UC San Diego exploring new-grad opportunities at your company. I came across your work and was struck by how directly it overlaps with what I want to learn.\n\nIf it's not too forward, I'd love to ask whether you'd be open to referring me for an open role on your team.`,
+  'Follow Up': `Dear Contact,\nFollowing up on my earlier note — I know inboxes get noisy. I wanted to flag that I'm still very interested in chatting and would value even 10 minutes of your time.\n\nHappy to come prepared with specific questions. Let me know what works.`
+};
+
+function EmailTemplateView({ onBack, template, setTemplate }) {
+  const [saved, setSaved] = React.useState(template.saved || 'Networking');
+  const [signOff, setSignOff] = React.useState(template.signOff || 'Best,');
+  const [signature, setSignature] = React.useState(template.signature || '');
+  const apply = () => { setTemplate({ saved, signOff, signature }); onBack(); };
+  const reset = () => { setSaved('Networking'); setSignOff('Best,'); setSignature(''); };
+  const pill = (active) => ({ border: 'none', background: active ? '#4A60A8' : '#fff', color: active ? '#fff' : '#3a4150', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 500, cursor: 'pointer', boxShadow: active ? 'none' : 'inset 0 0 0 1px #e7e5df', transition: 'all 120ms' });
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 40px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 30, fontWeight: 500, color: '#0e1116', margin: '0 0 6px' }}>Email Template</h1>
+        <p style={{ color: 'rgb(100,116,139)', fontSize: 16, lineHeight: 1.55, margin: '0 0 30px', maxWidth: 700 }}>
+          This controls how your outreach emails are written.<br />
+          Pick what you're asking for and how you want it to sound — check the preview below to see exactly what you'll get.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56 }}>
+          <div>
+            <button style={{ background: 'transparent', border: 'none', color: 'rgb(71,85,105)', fontSize: 16, cursor: 'pointer', padding: 0, marginBottom: 26, display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 500 }} onClick={onBack}>← Back to Find People</button>
+            <div style={{ fontSize: 14, letterSpacing: '0.16em', fontWeight: 700, color: 'rgb(30,45,77)', textTransform: 'uppercase', marginBottom: 12 }}>Saved</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 26 }}>{SAVED.map((s) => <button key={s} style={pill(saved === s)} onClick={() => setSaved(s)}>{s}</button>)}</div>
+            <div style={{ fontSize: 14, letterSpacing: '0.16em', fontWeight: 700, color: 'rgb(30,45,77)', textTransform: 'uppercase', marginBottom: 12 }}>Sign Off</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 26 }}>{SIGNOFFS.map((s) => <button key={s} style={pill(signOff === s)} onClick={() => setSignOff(s)}>{s}</button>)}</div>
+            <div style={{ fontSize: 14, letterSpacing: '0.16em', fontWeight: 700, color: 'rgb(30,45,77)', textTransform: 'uppercase', marginBottom: 12 }}>Signature</div>
+            <textarea style={{ width: '100%', background: 'rgb(248,250,252)', border: '1px solid rgb(226,232,240)', borderRadius: 10, padding: '12px 14px', fontSize: 14, fontFamily: 'inherit', color: '#64748B', resize: 'vertical', minHeight: 90, outline: 'none', marginBottom: 24 }} placeholder={"e.g. John Smith\nUSC\n2005"} value={signature} onChange={(e) => setSignature(e.target.value)} />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ background: '#1E2D4D', color: '#fff', border: 'none', borderRadius: 9, padding: '11px 18px', fontWeight: 500, fontSize: 13.5, cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.background='#2a3d68'} onMouseLeave={(e) => e.currentTarget.style.background='#1E2D4D'} onClick={apply}>Apply to this Search</button>
+              <button style={{ background: '#fff', color: '#3a4150', border: '1px solid #e7e5df', borderRadius: 9, padding: '11px 18px', fontWeight: 500, fontSize: 13.5, cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.background='#f3f1ec'} onMouseLeave={(e) => e.currentTarget.style.background='#fff'} onClick={reset}>Reset</button>
+            </div>
+          </div>
+          <div style={{ borderLeft: '1px solid #E2E8F0', paddingLeft: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 14, letterSpacing: '0.16em', fontWeight: 700, color: 'rgb(30,45,77)', textTransform: 'uppercase' }}>Preview</span>
+              <span style={{ color: 'rgb(224,122,62)', background: 'rgb(251,230,214)', fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 5, display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconSparkle size={10} /> AI Draft</span>
+            </div>
+            <p style={{ fontSize: 12, color: 'rgb(148,163,184)', marginBottom: 18 }}>This is a preview, actual emails will be personalized to each contact.</p>
+            {[['To', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eef1fb', color: '#4A60A8', borderRadius: 999, padding: '3px 9px', fontSize: 12, fontWeight: 500 }}><span style={{ width: 21, height: 21, borderRadius: '50%', background: '#4A60A8', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>CN</span>Contact Name</span>], ['From', <span style={{ color:'rgb(118,118,118)', fontSize:12, fontWeight:300 }}>useremail@gmail.com</span>], ['Subject', <span style={{ color:'rgb(118,118,118)', fontSize:12, fontWeight:300 }}>auto generated subject line</span>]].map(([l, v]) =>
+              <div key={l} style={{ display: 'grid', gridTemplateColumns: '60px 1fr', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f3f1ec', fontSize: 13.5 }}>
+                <div style={{ color: '#8a8f98', fontWeight: 500, fontSize: 12 }}>{l}</div><div>{v}</div>
+              </div>
+            )}
+            <div style={{ marginTop: 18, fontSize: 12, lineHeight: 1.7, color: '#1f242c', whiteSpace: 'pre-wrap', paddingBottom: 18, borderBottom: '1px solid #E5E5E5' }}>
+              {bodyByIntent[saved]}{'\n\n'}{signOff}{'\n'}{signature || 'User Name'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ===== OTHER VIEWS =====
+function TrackerView({ contacts }) {
+  const seedContacts = [{ name: 'Priya Anand', company: 'Linear', role: 'Senior Product Designer', status: 'Replied', date: '2d ago' }, { name: 'Marcus Chen', company: 'Anthropic', role: 'University Recruiter', status: 'Coffee scheduled', date: '4d ago' }, { name: 'Sarah Liu', company: 'Figma', role: 'Product Manager', status: 'Reached out', date: '5d ago' }, { name: 'David Okafor', company: 'Stripe', role: 'Engineering Manager', status: 'No response', date: '12d ago' }];
+  const all = [...contacts, ...seedContacts];
+  const statusStyle = (s) => { const map = { 'Reached out': { bg: '#eaf2fb', fg: '#2c5b8c' }, 'Replied': { bg: '#eaf4ec', fg: '#2d6840' }, 'Coffee scheduled': { bg: '#fbf3e1', fg: '#7a5a18' }, 'No response': { bg: '#f3f1ec', fg: '#5b6878' }, 'Saved': { bg: '#f3f1ec', fg: '#5b6878' } }; const c = map[s] || map['Saved']; return { background: c.bg, color: c.fg, borderRadius: 999, padding: '3px 10px', fontSize: 11.5, fontWeight: 600, display: 'inline-block' }; };
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '40px 32px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 38, fontWeight: 500, margin: '0 0 6px', color: '#0e1116' }}>Tracker</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 14.5, margin: '0 0 28px' }}>Every person you've reached out to, in one place.</p>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 14, padding: 0, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.2fr 1fr 0.9fr 0.8fr', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 600, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
+            <div>Name</div><div>Role · Company</div><div>Status</div><div>Last activity</div><div></div>
+          </div>
+          {all.map((c, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.2fr 1fr 0.9fr 0.8fr', fontSize: 13.5, color: '#1f242c', padding: '14px 16px', borderBottom: '1px solid var(--line-soft)', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, hsl(${i * 47 % 360} 35% 55%), hsl(${(i * 47 + 60) % 360} 40% 35%))`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600 }}>{c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
+                <span style={{ fontWeight: 500 }}>{c.name}</span>
+              </div>
+              <div style={{ color: 'var(--ink-soft)' }}>{c.role} · {c.company}</div>
+              <div><span style={statusStyle(c.status)}>{c.status}</span></div>
+              <div style={{ color: 'var(--muted)' }}>{c.date}</div>
+              <div style={{ textAlign: 'right' }}><button style={{ background: 'transparent', border: '1px solid var(--line)', borderRadius: 7, padding: '5px 10px', fontSize: 12, color: '#3a4150', cursor: 'pointer' }}>View</button></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function CoffeeChatView() {
+  const [topic, setTopic] = React.useState('');
+  const [briefing, setBriefing] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const generate = async () => {
+    if (!topic.trim()) return;
+    setLoading(true); setBriefing(null);
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: `Help a college student prepare for a coffee chat with: "${topic}". Return ONLY valid JSON (no markdown):\n{"background":"<2 sentences>","questions":["<5 questions>"],"dontAsk":["<3 to avoid>"],"closer":"<closing sentence>"}` }] })
+      });
+      const data = await response.json();
+      const text = data.content.map(i => i.text || '').join('');
+      setBriefing(JSON.parse(text.replace(/```json|```/g, '').trim()));
+    } catch (e) {
+      setBriefing({ background: 'Could not load briefing. ' + e.message, questions: [], dontAsk: [], closer: '' });
+    } finally { setLoading(false); }
+  };
+  const card = { background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 14, padding: 20, marginBottom: 12 };
+  const secLabel = { fontSize: 10.5, letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 };
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '40px 32px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 38, fontWeight: 500, margin: '0 0 6px', color: '#0e1116' }}>Coffee Chat Prep</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 14.5, margin: '0 0 28px' }}>Tell us who you're meeting — we'll generate a briefing and questions.</p>
+        <div style={{ ...card, padding: 16 }}>
+          <input value={topic} onChange={(e) => setTopic(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && generate()} placeholder="e.g. Priya Anand, Senior PM at Linear" style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 15, fontFamily: 'inherit', padding: '8px 4px' }} />
+        </div>
+        <button onClick={generate} disabled={!topic.trim() || loading} style={{ marginTop: 12, background: !topic.trim() || loading ? '#a4adba' : '#5b6878', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 18px', fontWeight: 600, fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: !topic.trim() || loading ? 'not-allowed' : 'pointer' }}>
+          {loading ? <Spinner /> : <IconSparkle size={14} />}
+          {loading ? 'Drafting…' : 'Generate briefing'}
+        </button>
+        {briefing && (
+          <div style={{ marginTop: 24 }}>
+            <div style={card}><div style={secLabel}>Background</div><div style={{ fontSize: 14, lineHeight: 1.6, color: '#1f242c' }}>{briefing.background}</div></div>
+            {briefing.questions?.length > 0 && <div style={card}><div style={secLabel}>Questions to ask</div><ol style={{ paddingLeft: 20, margin: 0, fontSize: 14, lineHeight: 1.7, color: '#1f242c' }}>{briefing.questions.map((q, i) => <li key={i} style={{ marginBottom: 6 }}>{q}</li>)}</ol></div>}
+            {briefing.dontAsk?.length > 0 && <div style={card}><div style={secLabel}>Skip these</div><ul style={{ paddingLeft: 20, margin: 0, fontSize: 13.5, lineHeight: 1.7, color: 'var(--ink-soft)' }}>{briefing.dontAsk.map((q, i) => <li key={i} style={{ marginBottom: 4 }}>{q}</li>)}</ul></div>}
+            {briefing.closer && <div style={{ ...card, background: '#fbfaf7' }}><div style={secLabel}>Strong closer</div><div style={{ fontFamily: 'var(--serif)', fontSize: 18, lineHeight: 1.4, color: '#0e1116' }}>"{briefing.closer}"</div></div>}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function JobBoardView() {
+  const jobs = [{ co: 'Anthropic', role: 'New Grad Software Engineer', loc: 'SF / Remote', tags: ['New grad', 'Full-time'], posted: '2d ago' }, { co: 'Figma', role: 'Product Designer, Intern', loc: 'NYC', tags: ['Internship', 'Summer 2026'], posted: '3d ago' }, { co: 'Linear', role: 'Founding Engineer (Recent Grad)', loc: 'Remote', tags: ['New grad', 'Full-time'], posted: '5d ago' }, { co: 'Ramp', role: 'Associate PM, University', loc: 'NYC / Miami', tags: ['New grad', 'PM'], posted: '1w ago' }, { co: 'Notion', role: 'APM Intern', loc: 'SF', tags: ['Internship', 'PM'], posted: '1w ago' }];
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '40px 32px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 38, fontWeight: 500, margin: '0 0 6px', color: '#0e1116' }}>Job Board</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 14.5, margin: '0 0 28px' }}>Curated new-grad and internship roles.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          {jobs.map((j, i) => (
+            <div key={i} style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 14, padding: 20, cursor: 'pointer', transition: 'border-color 140ms' }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#cfcdc6'} onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--line)'}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontWeight: 600, fontSize: 13.5 }}>{j.co}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{j.posted}</div>
+              </div>
+              <div style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 500, lineHeight: 1.2, marginBottom: 6 }}>{j.role}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 12 }}>{j.loc}</div>
+              <div style={{ display: 'flex', gap: 6 }}>{j.tags.map(t => <span key={t} style={{ fontSize: 11.5, padding: '3px 9px', borderRadius: 999, background: '#f3f1ec', color: '#3a4150' }}>{t}</span>)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function GenericView({ title, sub }) {
+  return (
+    <main style={{ flex: 1, height: '100vh', overflowY: 'auto', background: '#FFFFFF' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '40px 32px 80px' }}>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 38, fontWeight: 500, margin: '0 0 6px', color: '#0e1116' }}>{title}</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 14.5, margin: '0 0 28px' }}>{sub}</p>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 14, padding: 60, textAlign: 'center', color: 'var(--muted)' }}>This view is a placeholder in the demo.</div>
+      </div>
+    </main>
+  );
+}
+
+
+// ===== APP =====
+const TWEAK_DEFAULTS = { "accentColor": "#4A60A8", "headingFont": "Cormorant Garamond" };
+
+async function findContacts({ query, tab, count, template }) {
+  const subjectByTab = tab === 'companies' ? 'companies' : tab === 'managers' ? 'hiring managers / recruiters' : 'individual professionals';
+  const tone = template?.saved || 'Networking';
+  const sig = template?.signature || 'Alex Chen';
+  const signOff = template?.signOff || 'Best,';
+
+  const peopleSchema = `{"name":"<full name>","role":"<job title>","company":"<company name>","location":"<City, State or Remote>","email":"<plausible work email>","handle":"<linkedin slug>","match":<integer 70-99>,"draft":"<4-6 sentence cold outreach. Tone: ${tone}. Sign: ${signOff}\\n${sig}>"}`;
+  const companySchema = `{"name":"<company name>","website":"<url>","linkedin":"<slug>","industry":"<industry>","location":"<HQ city>","stage":"<e.g. Series B>"}`;
+  const managerSchema = `{"name":"<full name>","role":"Hiring Manager","company":"<company name>","location":"<City, State>","email":"<plausible work email>","handle":"<linkedin slug>","match":<integer 70-99>,"draft":"<4-6 sentence email. Tone: ${tone}. Sign: ${signOff}\\n${sig}>"}`;
+  const schema = tab === 'companies' ? companySchema : tab === 'managers' ? managerSchema : peopleSchema;
+
+  const prompt = `You are powering a contact-finder tool for a college student. QUERY: "${query}" TYPE: ${subjectByTab} COUNT: ${count}\nGenerate ${count} REALISTIC-SOUNDING but FICTIONAL results. Return ONLY a JSON array, no markdown, no preamble. Each item: ${schema}`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+  });
+  const data = await response.json();
+  const raw = data.content.map(i => i.text || '').join('');
+  const cleaned = raw.replace(/```json|```/g, '').trim();
+  const start = cleaned.indexOf('[');
+  const end = cleaned.lastIndexOf(']');
+  if (start === -1 || end === -1) throw new Error('No JSON array in response');
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+function mockResults(query, count, tab) {
+  const peopleNames = ['Priya Anand','Marcus Chen','Sarah Liu','David Okafor','Elena Vasquez','James Park','Aisha Rahman','Tom Wright','Maya Patel','Chris Nguyen','Sofia Romano','Jordan Kim'];
+  const companies = ['Linear','Figma','Anthropic','Stripe','Notion','Ramp','Vercel','Vanta','Plaid','Modern Treasury','Mercury','Brex','Pulley','Replit','Retool','Census','Hex','Airbyte','Dagster','Prisma'];
+  const roles = ['Senior Product Designer','Product Manager','Software Engineer','Engineering Manager','Founding Engineer','Design Lead'];
+  const industries = ['Fintech','AI/ML','DevTools','Climate','Healthtech','Consumer','Enterprise SaaS','Marketplaces'];
+  const cities = ['NYC','San Francisco','Remote','Brooklyn','Seattle','Austin','Boston'];
+
+  if (tab === 'companies') {
+    return [...Array(count)].map((_, i) => ({ name: companies[i % companies.length], website: companies[i % companies.length].toLowerCase() + '.com', linkedin: 'company/' + companies[i % companies.length].toLowerCase(), industry: industries[i % industries.length], location: cities[i % cities.length], stage: ['Seed','Series A','Series B','Series C'][i % 4] }));
+  }
+  return [...Array(count)].map((_, i) => {
+    const name = peopleNames[i % peopleNames.length];
+    const co = companies[i % companies.length];
+    const role = tab === 'managers' ? 'Hiring Manager' : roles[i % roles.length];
+    const first = name.split(' ')[0].toLowerCase();
+    const last = name.split(' ')[1].toLowerCase();
+    return { name, role, company: co, location: cities[i % cities.length], email: `${first}.${last}@${co.toLowerCase()}.com`, handle: `${first}${last}`, match: 95 - (i % 10) * 2, draft: `Hi ${first},\n\nI'm Alex, a junior at UC San Diego studying Cognitive Science. I came across your work at ${co} and was struck by your team's recent direction.\n\nWould you be open to a brief 15-minute chat?\n\nBest,\nAlex` };
+  });
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [active, setActive] = React.useState('find');
+  const [tab, setTab] = React.useState('people');
+  const [view, setView] = React.useState('input');
+  const [resultViewKey, setResultViewKey] = React.useState('outbox');
+  const [loading, setLoading] = React.useState(false);
+  const [params, setParams] = React.useState({ query: '', count: 1 });
+  const [results, setResults] = React.useState([]);
+  const [lastQuery, setLastQuery] = React.useState('');
+  const [lastTab, setLastTab] = React.useState('people');
+  const [trackerExtras, setTrackerExtras] = React.useState([]);
+  const [emailTemplate, setEmailTemplate] = React.useState({ saved: 'Networking', signOff: 'Best,', signature: '' });
+
+  React.useEffect(() => { document.documentElement.style.setProperty('--accent', t.accentColor); }, [t.accentColor]);
+
+  const onSearch = async () => {
+    setLoading(true); setView('results'); setLastQuery(params.query); setLastTab(tab); setResults([]);
+    try {
+      const data = await findContacts({ query: params.query, tab, count: params.count, template: emailTemplate });
+      setResults(data);
+    } catch (e) {
+      console.warn('API call failed, using mock:', e);
+      setResults(mockResults(params.query, params.count, tab));
+    } finally { setLoading(false); }
+  };
+
+  const onAddToTracker = (rs) => {
+    const added = rs.map(r => ({ name: r.name, company: r.company, role: r.role || 'Contact', status: 'Reached out', date: 'just now' }));
+    setTrackerExtras(prev => [...added, ...prev]);
+  };
+
+  const handleViewChange = (key) => {
+    setResultViewKey(key);
+    if (key === 'tracker') { onAddToTracker(results); setActive('tracker'); }
+  };
+
+  const renderFindArea = () => {
+    if (view === 'input') return <FindView tab={tab} setTab={setTab} params={params} setParams={setParams} onSearch={onSearch} loading={loading} onOpenTemplate={() => setView('template')} />;
+    if (view === 'template') return <EmailTemplateView onBack={() => setView('input')} template={emailTemplate} setTemplate={setEmailTemplate} />;
+    if (lastTab === 'people') return <PeopleContactsView query={lastQuery} count={params.count} results={results} loading={loading} onBack={() => setView('input')} onDraftEmail={() => setView('template')} viewKey={resultViewKey} setViewKey={handleViewChange} />;
+    if (lastTab === 'companies') return <CompaniesSpreadsheetView count={params.count} results={results} loading={loading} onBack={() => setView('input')} />;
+    return <ManagersListView count={params.count} results={results} loading={loading} onBack={() => setView('input')} viewKey={resultViewKey} setViewKey={handleViewChange} />;
+  };
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar active={active} onNav={(id) => {
+        setActive(id);
+        if (id === 'find') { setView('input'); setTab('people'); setParams({ query: '', count: 1 }); }
+      }} />
+      {active === 'find' && renderFindArea()}
+      {active === 'coffee' && <CoffeeChatView />}
+      {active === 'tracker' && <TrackerView contacts={trackerExtras} />}
+      {active === 'board' && <JobBoardView />}
+      {active === 'pricing' && <GenericView title="Pricing" sub="Plans and credit packages." />}
+      {active === 'docs' && <GenericView title="Documentation" sub="Guides for getting the most out of Find." />}
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Brand">
+          <TweakColor label="Primary accent" value={t.accentColor} onChange={(v) => setTweak('accentColor', v)} options={['#4A60A8','#1f3a5f','#5b6878','#3a5a3f','#7a5a18']} />
+        </TweakSection>
+        <TweakSection label="Typography">
+          <TweakRadio label="Heading style" value={t.headingFont} onChange={(v) => setTweak('headingFont', v)} options={[{ value: 'Cormorant Garamond', label: 'Serif' }, { value: 'Inter', label: 'Sans' }]} />
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
